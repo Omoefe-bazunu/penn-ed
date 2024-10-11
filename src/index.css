@@ -1,0 +1,336 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
+/* src/styles/tailwind.css */
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+:root {
+  font-family: "Poppins", sans-serif;
+  color-scheme: light dark;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+
+body {
+  margin: 0;
+  padding: 0%;
+  display: flex;
+  flex-direction: column;
+  scroll-behavior: smooth;
+  box-sizing: border-box;
+  background-color: #221944;
+}
+
+
+/* BUTTON ANIMATION */
+
+.button {
+  transition: transform 0.8s ease-in-out;
+}
+
+.button:hover {
+  transform: scale(0.85);
+}
+/* MENUBAR */
+
+.Bar {
+  background-color: #1b1531;
+}
+
+.Bar .LoginBtn {
+  background-color: #bb4222;
+}
+
+.scale-up-tr {
+	-webkit-animation: scale-up-tr 0.4s cubic-bezier(0.390, 0.575, 0.565, 1.000) both;
+	        animation: scale-up-tr 0.4s cubic-bezier(0.390, 0.575, 0.565, 1.000) both;
+}
+
+.menu-link li:hover {
+  transition: color 1s;
+  color: rgb(238, 255, 15);
+}
+
+ @-webkit-keyframes scale-up-tr {
+  0% {
+    -webkit-transform: scale(0.5);
+            transform: scale(0.5);
+    -webkit-transform-origin: 100% 0%;
+            transform-origin: 100% 0%;
+  }
+  100% {
+    -webkit-transform: scale(1);
+            transform: scale(1);
+    -webkit-transform-origin: 100% 0%;
+            transform-origin: 100% 0%;
+  }
+}
+@keyframes scale-up-tr {
+  0% {
+    -webkit-transform: scale(0.5);
+            transform: scale(0.5);
+    -webkit-transform-origin: 100% 0%;
+            transform-origin: 100% 0%;
+  }
+  100% {
+    -webkit-transform: scale(1);
+            transform: scale(1);
+    -webkit-transform-origin: 100% 0%;
+            transform-origin: 100% 0%;
+  }
+}
+
+/* SignUp Page */
+.SignUp-Wrapper .SignUpInner {
+  height: 30rem;
+}
+
+.SignUp-Wrapper .SignUpInner .Form .brand, 
+.SignUp-Wrapper .SignUpInner .Form .FormElement input{
+  color:#221944;
+}
+
+.SignUp-Wrapper .SignUpInner .Form .FormElement button{
+  background-color:#221944;
+}
+
+/* Login Page */
+.LogIn-Wrapper .LogInInner {
+  height: 30rem;
+}
+
+
+.LogIn-Wrapper .LogInInner .Form .brand,
+.LogIn-Wrapper .LogInInner .Form .FormElement .signup,
+.LogIn-Wrapper .LogInInner .Form .FormElement input{
+  color:#221944;
+}
+
+.LogIn-Wrapper .LogInInner .Form .FormElement button{
+  background-color:#221944;
+}
+
+/* PasswordReset Page */
+.PwdRT1-Wrapper .PwdRT1Inner,
+.PwdRT2-Wrapper .PwdRT2Inner,
+.PwdRT3-Wrapper .PwdRT3Inner {
+  height: 30rem;
+}
+
+
+.PwdRT1-Wrapper .PwdRT1Inner .Form .brand,
+.PwdRT1-Wrapper .PwdRT1Inner .Form .FormElement .signup,
+.PwdRT1-Wrapper .PwdRT1Inner .Form .FormElement input,
+.PwdRT2-Wrapper .PwdRT1Inner .Form .brand,
+.PwdRT2-Wrapper .PwdRT1Inner .Form .FormElement .signup,
+.PwdRT2-Wrapper .PwdRT1Inner .Form .FormElement input,
+.PwdRT3-Wrapper .PwdRT3Inner .Form .brand,
+.PwdRT3-Wrapper .PwdRT3Inner .Form .FormElement .signup,
+.PwdRT3-Wrapper .PwdRT3Inner .Form .FormElement input{
+  color:#221944;
+}
+
+.PwdRT1-Wrapper .PwdRT1Inner .Form .FormElement button,
+.PwdRT2-Wrapper .PwdRT2Inner .Form .FormElement button,
+.PwdRT3-Wrapper .PwdRT3Inner .Form .FormElement button{
+  background-color:#221944;
+}
+
+/* NavBar */
+.NavBar {
+  background-color:#221944;
+}
+.NavBar .NavLinks .LoginBtn,
+.NavBar .NavLinks .LogoutBtn,  
+.Bar .menu-link .Login, 
+.Bar .menu-link .Logout  {
+  background-color: #bb4222;
+}
+
+.NavLinks .LogoutBtn {
+  display: none;
+}
+
+/* BreadCrumbs */
+
+.breadcrumbs > *  {
+  display: inline-block;
+  }
+  
+.breadcrumbs  .crumb:after{
+  Content: '|';
+  margin: 10px;
+  color: white;
+  }
+  
+.breadcrumbs  .crumb:last-child:after {
+  display:none;
+  }
+  
+.breadcrumbs  .crumb a {
+  color: white;
+  } 
+  
+
+/* Footer */
+
+.Footer {
+  background-color: #1b1531;
+}
+
+/* SideBar */
+
+.sideBar {
+  background-color: #1b1531;
+}
+
+.sideBar .ads .adsbox .ads1,
+.sideBar .ads .adsbox .ads2,
+.sideBar .ads .adsbox .ads3 {
+  height: 250px;
+}
+
+/* About */
+
+.AboutWrapper .AboutDetails p {
+  line-height: 18px;
+}
+
+/* Contact */
+
+.Contact-Wrapper .ContactInner {
+  height: 30rem;
+}
+
+
+.Contact-Wrapper .ContactInner .Form .header,
+.Contact-Wrapper .ContactInner .Form .FormElement input{
+  color:#221944;
+}
+
+.Contact-Wrapper .ContactInner .Form .FormElement button{
+  background-color:#221944;
+}
+
+/* Blogs */
+
+.BlogsWrapper .posts, .BlogsWrapper .header,  
+.DashboardWrapper .postwrapper .posts,
+.MessagesWrapper .messages,
+.MessagesWrapper .header{
+  background-color:#1b1531;
+}
+
+.BlogsWrapper .post-inner .posts .postBody {
+  line-height: 18px;
+}
+
+
+/* BlogDetails */
+
+.BlogDetailsWrapper .postwrapper .post,
+.BlogDetailsWrapper .postwrapper .commentbox {
+  background-color:#1b1531;
+}
+
+.BlogDetailsWrapper .postwrapper .post .reactions {
+  background-color: #bb4222;
+}
+
+.BlogDetailsWrapper .postwrapper .post .reactions .Reaction{
+  transition: scale 0.5;
+}
+
+.BlogDetailsWrapper .postwrapper .post .reactions .Reaction:hover {
+  scale: 0.8;
+}
+
+
+.BlogDetailsWrapper .postwrapper .commentbox .commentForm button{
+  background-color: #bb4222;
+}
+
+
+/* Dashboard */
+
+.DashboardWrapper .postwrapper .post,
+.DashboardWrapper .postwrapper .createPost {
+  background-color:#1b1531;
+}
+
+.DashboardWrapper .postwrapper .postForm .Btn{
+  background-color: #bb4222;
+}
+
+/* RESPONSIVENESS */
+@media only screen and (max-width: 650px) {
+
+  .NavLinks {
+    display: none;
+  }
+
+  .MenuIcon {
+    display: flex;
+  }
+
+   /* BreadCrumbs */
+   .breadcrumbs {
+    text-align: center;
+  }
+
+  /* Blogs */
+
+  .BlogsWrapper, .AboutWrapper, .DashboardWrapper,
+  .Contact-Wrapper .ContactInner,
+  .SignUp-Wrapper .SignUpInner,
+  .LogIn-Wrapper .LogInInner, 
+  .PwdRT1-Wrapper .PwdRT1Inner, .PwdRT2-Wrapper .PwdRT2Inner, .PwdRT3-Wrapper .PwdRT3Inner {
+    flex-direction: column;
+  }
+
+  .BlogsWrapper .sideBar, .DashboardWrapper .sideBar, .BlogDetailsWrapper .sideBar {
+    width: 100%;
+  }
+
+  /* About */
+
+  .AboutWrapper .AboutDetails {
+    border: none;
+    border-top: 1px solid white;
+    padding: 0;
+    padding-top: 18px;
+  }
+
+  .AboutWrapper .featuredImage {
+    border: none;
+    border-bottom: 2px solid white;
+  }
+
+  /* Dashboard */
+
+  /* Contact */
+  .Contact-Wrapper .ContactInner, 
+  .SignUp-Wrapper .SignUpInner,
+  .LogIn-Wrapper .LogInInner,
+  .PwdRT1-Wrapper .PwdRT1Inner, .PwdRT2-Wrapper .PwdRT2Inner, 
+  .PwdRT3-Wrapper .PwdRT3Inner{
+    height: 100vh;
+  }
+
+  .Contact-Wrapper .ContactInner .FormElement, 
+  .LogIn-Wrapper .LogInInner .FormElement,
+  .PwdRT1-Wrapper .PwdRT1Inner .FormElement,
+  .PwdRT2-Wrapper .PwdRT2Inner .FormElement,
+  .PwdRT3-Wrapper .PwdRT3Inner .FormElement,
+  .SignUp-Wrapper .SignUpInner .FormElement{
+   padding: 2px 4px;
+  }
+
+  .BlogDetailsWrapper {
+    flex-direction: column;
+  }
+}
