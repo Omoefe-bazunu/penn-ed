@@ -1,7 +1,7 @@
 import { Form } from "react-router-dom";
 import { SideBar } from "../Home/SideBar";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { storage } from "../../Firebase";
+import { storage, auth } from "../../Firebase";
 import { useEffect, useState } from "react";
 import {
   collection,
@@ -15,6 +15,7 @@ import { dbase } from "../../Firebase";
 
 export const CreateCourse = () => {
   const [courses, setCourses] = useState(null);
+  const [user, setUser] = useState("");
 
   // This fetches the image for each post
   const fetchImage = async (imageurl) => {
@@ -32,6 +33,9 @@ export const CreateCourse = () => {
 
   // This fetches the posts made by the user logged in
   useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setUser(user);
+    });
     const fetchCourses = async () => {
       try {
         const q = query(
@@ -57,6 +61,9 @@ export const CreateCourse = () => {
       }
     };
     fetchCourses();
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   // Helper function to format date
@@ -105,6 +112,22 @@ export const CreateCourse = () => {
         alert("Error deleting Post: ", error);
       });
   };
+
+  if (!user) {
+    return (
+      <>
+        <p className=" text-white">Unauthorized Access</p>
+      </>
+    );
+  }
+
+  if (user && user.uid !== "Nj7jptHDgfgFbhL4qcO1Gwg1YfM2") {
+    return (
+      <>
+        <p className=" text-white">Access Denied: Not an Admin</p>
+      </>
+    );
+  }
 
   return (
     <div className="DashboardWrapper w-5/6 h-fit flex gap-4">

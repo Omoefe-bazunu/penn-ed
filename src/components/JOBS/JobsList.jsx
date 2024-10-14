@@ -1,7 +1,7 @@
 import { SideBar } from "../Home/SideBar";
 import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { dbase } from "../../Firebase";
+import { dbase, auth } from "../../Firebase";
 import { storage } from "../../Firebase";
 import { ref, getDownloadURL } from "firebase/storage";
 import { Link } from "react-router-dom";
@@ -9,6 +9,17 @@ import { Link } from "react-router-dom";
 export const JobListing = () => {
   const [jobs, setJobs] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState("");
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setUser(user);
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
   const fetchImage = async (imageurl) => {
     if (imageurl) {
@@ -63,6 +74,14 @@ export const JobListing = () => {
     const year = date.getFullYear();
     return `${monthName} ${day}, ${year}`;
   };
+
+  if (!user) {
+    return (
+      <>
+        <p className="text-white">Sign Up/Login to see Available JOBS</p>
+      </>
+    );
+  }
 
   return (
     <div className="BlogsWrapper w-5/6 h-fit flex gap-4">

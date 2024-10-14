@@ -27,6 +27,8 @@ import { CreateCourse } from "./components/LEARNING/CreateCourse.jsx";
 import { jobCreation } from "./components/formHandlers/Jobs.jsx";
 import { CourseCreation } from "./components/formHandlers/Course.jsx";
 import { ErrorPage } from "./components/ErrorPage.jsx";
+import { Premium } from "./components/Home/Premium.jsx";
+import { premiumForm } from "./components/formHandlers/Premium.jsx";
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -50,6 +52,7 @@ const router = createBrowserRouter(
       <Route path="Login" element={<LogIn />} action={LoginForm} />
       <Route path="PasswordReset1" element={<PwdReset />} />
       <Route path="Messages" element={<Messages />} />
+      <Route path="Premium" element={<Premium />} action={premiumForm} />
       <Route path="*" element={<ErrorPage />} />
     </Route>
   )
