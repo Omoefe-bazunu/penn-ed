@@ -39,10 +39,12 @@ export const About = () => {
           TYPESCRIPT, EXCEL AND GOOGLE FIREBASE.
         </p>
         <p className="">
-          You are free to sign up as a BASIC user to read, comment and upvote
-          posts on the blog, but you have to upgrade to a PREMIUM user with a
-          monthly subscription to be able to publish a post that can become
-          eligible for earning based on pre-set criteria.
+          You are free to sign up as a BASIC user to post, read, comment and
+          upvote posts on the blog, but you have to upgrade to a PREMIUM user
+          with a monthly subscription to be able to publish a post that can
+          become eligible for earning based on pre-set criteria and to also to
+          get access to the jobs page for remote, onsite and hybrid job offers,
+          specifically those that relates to writing.
         </p>
       </div>
     </div>
