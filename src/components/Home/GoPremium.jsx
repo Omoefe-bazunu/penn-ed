@@ -65,7 +65,8 @@ const GoPremium = () => {
       <h2 className=" text-white mb-4 font-bold mt-3">GO PREMIUM</h2>
       <p>
         Benefits: <br /> - Earnings from all posts you create <br /> - Get
-        Personal Portfolio in case of job applications <br />
+        Personal Portfolio in case of job applications <br />- Access to weekly
+        NGN1,000 airtime giveaway for most Upvoted post of the week
       </p>
       <form
         id="createAds"
@@ -74,8 +75,11 @@ const GoPremium = () => {
       >
         <div className="featuredImg flex bg-inherit mt-8 gap-2 flex-col">
           <p className=" italic text-sm">
-            Make a transfer to the account details below, upload the screenshot
-            and click the SUBMIT button
+            Make a transfer of NGN1,000 to the account details below, upload the
+            receipt/screenshot and click the SUBMIT button.{" "}
+            <span className="text-yellow-300">
+              Subscription is valid for a MONTH.
+            </span>
           </p>
           <p className=" mt-4">
             3098523897 <br />
@@ -92,7 +96,7 @@ const GoPremium = () => {
           Upgrade takes less than 30 mins after verification from the Admin.
         </p>
         <button className="Btn button bg-secondary text-white text-left text-sm text-nowrap py-2 w-fit pr-5 pl-2 rounded-sm cursor-pointer mt-3 mb-5">
-          SUBMIT ADS
+          SUBMIT
         </button>
       </form>
     </div>

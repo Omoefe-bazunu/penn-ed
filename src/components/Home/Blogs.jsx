@@ -9,6 +9,7 @@ import { Link } from "react-router-dom";
 export const Blogs = () => {
   const [post, setPosts] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [count, setCount] = useState(0);
 
   const fetchImage = async (imageurl) => {
     if (imageurl) {
@@ -22,6 +23,17 @@ export const Blogs = () => {
       }
     }
   };
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(
+      collection(dbase, "users"),
+      (querySnapshot) => {
+        setCount(querySnapshot.size);
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -74,6 +86,9 @@ export const Blogs = () => {
       ) : (
         <>
           <div className="post-inner w-full h-fit rounded-md flex justify-start gap-3 flex-col">
+            <div className=" text-yellow-300 text-sm">
+              Registered Users: {count}
+            </div>
             <div className="header w-full h-fit rounded-md py-4 px-5 text-white text-xl justify-center items-center flex">
               ALL POSTS
             </div>

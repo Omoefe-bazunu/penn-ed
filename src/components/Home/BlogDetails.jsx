@@ -67,7 +67,7 @@ export const BlogDetails = () => {
   // This runs the image fetching function anytime there's a change to the post state.
   useEffect(() => {
     fetchImage();
-  }, [id]);
+  }, [post]);
 
   // This code converts the timestamp for the post to a readable date that users can see
   const formatDate = (date) => {

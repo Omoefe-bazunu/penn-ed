@@ -1,4 +1,4 @@
-import { Form } from "react-router-dom";
+import { Form, Link } from "react-router-dom";
 import { SideBar } from "./SideBar";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "../../Firebase";
@@ -12,12 +12,43 @@ import {
   orderBy,
   deleteDoc,
   doc,
+  getDocs,
 } from "firebase/firestore";
 import { dbase } from "../../Firebase";
 
 export const DashBoard = () => {
+  const [user, setUser] = useState(null);
   const [post, setPosts] = useState(null);
   const [userEmail, setUserEmail] = useState("");
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const currentUser = auth.currentUser;
+        if (currentUser) {
+          const q = query(
+            collection(dbase, "users"),
+            where("userEmail", "==", currentUser.email)
+          );
+          const querySnapshot = await getDocs(q);
+          if (querySnapshot.docs.length > 0) {
+            const data = querySnapshot.docs[0].data();
+            const { role } = data;
+            if (role == "Basic") {
+              setUser({ role });
+            }
+          } else {
+            console.log("No such document!");
+          }
+        } else {
+          console.log("No current user logged in");
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    };
+    fetchUserData();
+  }, []);
 
   useEffect(() => {
     const user = auth.currentUser;
@@ -118,6 +149,11 @@ export const DashBoard = () => {
   return (
     <div className="DashboardWrapper w-5/6 h-fit flex gap-4">
       <div className="postwrapper w-full h-full flex flex-col justify-start gap-5">
+        {user && (
+          <div className=" text-white bg-secondary button cursor-pointer text-xs px-4 py-2 rounded w-fit">
+            <Link to="/GoPremium">Upgrade to Premium</Link>
+          </div>
+        )}
         {post &&
           post.map((post) => (
             <div
@@ -144,14 +180,11 @@ export const DashBoard = () => {
               <p className="postBody text-white whitespace-pre-wrap">
                 {post.body.slice(0, 200)}...
               </p>
-              <p className=" text-yellow-300 text-sm mt-1 mb-4 ">
-                Read Full Content....
-              </p>
               <p className=" hidden" id={post.id}>
                 {post.id}
               </p>
               <button
-                className="delete button text-white bg-red-600 w-fit text-xs py-2 px-4 mb-5 rounded-sm"
+                className="delete button text-white bg-red-600 w-fit text-xs py-2 px-4 my-5 rounded-sm"
                 onClick={() => handleDeletePost(post.id)}
               >
                 Delete

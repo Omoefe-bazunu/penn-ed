@@ -155,14 +155,11 @@ export const CreateJobs = () => {
               <p className="postBody text-white whitespace-pre-wrap">
                 {job.body.slice(0, 200)}...
               </p>
-              <p className=" text-yellow-300 text-sm mt-1 mb-4 ">
-                Read Full Content....
-              </p>
               <p className=" hidden" id={job.id}>
                 {job.id}
               </p>
               <button
-                className="delete button text-white bg-red-600 w-fit text-xs py-2 px-4 mb-5 rounded-sm"
+                className="delete button text-white bg-red-600 w-fit text-xs py-2 px-4 my-5 rounded-sm"
                 onClick={() => handleDeleteJob(job.id)}
               >
                 Delete
