@@ -28,7 +28,7 @@ export const BlogDetails = () => {
   //This code fetches the post image from the firebase storage if the post exists or has a value
   const fetchImage = async () => {
     if (post) {
-      const imageRef = ref(storage, `posts/${post.imageurl}`); // The imageurl property of the post object is passed as the path for the post image.
+      const imageRef = ref(storage, `posts/${post.imageurl}`);
       try {
         const url = await getDownloadURL(imageRef);
         setImageSrc(url);
@@ -142,7 +142,7 @@ export const BlogDetails = () => {
   return (
     <div className="BlogDetailsWrapper w-5/6 h-fit flex gap-4">
       {isLoading ? (
-        <div className="loading-spinner w-full flex justify-center items-center text-white text-xl">
+        <div className="loading-spinner w-32 h-32 pulsate-fwd rounded-full mx-auto p-5 bg-secondary flex justify-center items-center text-white text-sm">
           {" "}
           Loading...
         </div>

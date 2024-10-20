@@ -10,13 +10,13 @@ import {
   deleteDoc,
   doc,
 } from "firebase/firestore";
-import { dbase } from "../../Firebase";
+import { dbase } from "../../../Firebase";
 import { useEffect, useState } from "react";
-import { auth } from "../../Firebase";
+import { auth } from "../../../Firebase";
 import { FaRegTrashCan } from "react-icons/fa6";
 import { HiDotsVertical } from "react-icons/hi";
 
-export const Comments = ({ postId }) => {
+export const SeriesComments = ({ postId }) => {
   const [user, setUser] = useState(null);
   const [comment, setComments] = useState([]); // renamed for clarity
   const [isOpen, setIsOpen] = useState(false);
@@ -56,7 +56,7 @@ export const Comments = ({ postId }) => {
   const handleSubmit = async (event) => {
     event.preventDefault();
     try {
-      const docRef = await addDoc(collection(dbase, "comments"), {
+      const docRef = await addDoc(collection(dbase, "seriescomments"), {
         commentText: formData.commentText,
         email: user.userEmail,
         name: user.FullName,
@@ -85,7 +85,7 @@ export const Comments = ({ postId }) => {
 
   const fetchComment = () => {
     const q = query(
-      collection(dbase, "comments"),
+      collection(dbase, "seriescomments"),
       where("postId", "==", postId),
       orderBy("CreatedAt", "desc")
     );
@@ -105,7 +105,7 @@ export const Comments = ({ postId }) => {
 
   const handleDelete = async (cId, cEmail) => {
     if (user.userEmail == cEmail) {
-      const docRef = doc(dbase, "comments", cId);
+      const docRef = doc(dbase, "seriescomments", cId);
       await deleteDoc(docRef)
         .then(() => {
           // alert("Comment deleted successfully!");

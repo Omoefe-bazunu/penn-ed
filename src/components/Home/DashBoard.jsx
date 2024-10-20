@@ -1,9 +1,10 @@
-import { Form, Link } from "react-router-dom";
 import { SideBar } from "./SideBar";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { ref, getDownloadURL } from "firebase/storage";
 import { storage } from "../../Firebase";
 import { useEffect, useState } from "react";
 import { auth } from "../../Firebase";
+import { IoIosClose } from "react-icons/io";
+import { HiPencil } from "react-icons/hi";
 import {
   collection,
   query,
@@ -13,13 +14,113 @@ import {
   deleteDoc,
   doc,
   getDocs,
+  updateDoc,
 } from "firebase/firestore";
 import { dbase } from "../../Firebase";
+import SeriesForm from "./Series/SeriesForm";
+import SinglePostForm from "./Series/SinglePostForm";
+import { Link } from "react-router-dom";
 
 export const DashBoard = () => {
   const [user, setUser] = useState(null);
   const [post, setPosts] = useState(null);
   const [userEmail, setUserEmail] = useState("");
+  const [isEditingPost, setIsEditingPost] = useState(false);
+  const [currentPost, setCurrentPost] = useState({
+    // id: post/.id,
+    title: "",
+    body: "",
+  });
+
+  // This fetches the posts made by the user logged in
+  useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        const q = query(
+          collection(dbase, "posts"),
+          where("userEmail", "==", userEmail),
+          orderBy("createdAt", "desc")
+        );
+        onSnapshot(q, async (snapshot) => {
+          const fetchedPosts = [];
+
+          for (const doc of snapshot.docs) {
+            const postItem = { ...doc.data(), id: doc.id };
+            postItem.formattedDate = formatDate(postItem.createdAt.toDate());
+            postItem.featuredImageUrl = await fetchImage(postItem.imageurl);
+            fetchedPosts.push(postItem);
+          }
+
+          // Set the fetched posts to the state
+          setPosts(fetchedPosts);
+        });
+      } catch (error) {
+        console.error("Error fetching posts:", error);
+      }
+    };
+
+    // Fetch posts immediately when the component mounts
+    fetchPosts();
+  });
+
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setCurrentPost((prevPost) => ({
+      ...prevPost,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    try {
+      // Get a reference to the document to be updated
+      const postRef = doc(dbase, "posts", currentPost.id);
+
+      // Update the document with the new title and body
+      await updateDoc(postRef, {
+        title: currentPost.title,
+        body: currentPost.body,
+      });
+
+      // Reset the form fields
+      setCurrentPost({
+        title: "",
+        body: "",
+      });
+
+      // Handle success (e.g., show success message, redirect)
+      console.log("Post updated successfully!");
+      setIsEditingPost(false);
+    } catch (error) {
+      // Handle errors (e.g., show error message)
+      console.error("Error updating post:", error);
+    }
+  };
+
+  //END
+
+  const handleClose = () => {
+    setIsEditingPost(false);
+  };
+
+  const handleEdit = (postId) => {
+    // Find the clicked post by ID
+    const clickedPost = post.find((p) => p.id === postId);
+
+    if (clickedPost) {
+      // Update currentPost state with clicked post data
+      setCurrentPost({
+        id: clickedPost.id,
+        title: clickedPost.title,
+        body: clickedPost.body,
+      });
+      setIsEditingPost(true);
+    } else {
+      console.error("Post not found!");
+    }
+  };
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -71,34 +172,6 @@ export const DashBoard = () => {
     }
   };
 
-  // This fetches the posts made by the user logged in
-  useEffect(() => {
-    const fetchPosts = async () => {
-      try {
-        const q = query(
-          collection(dbase, "posts"),
-          where("userEmail", "==", userEmail),
-          orderBy("createdAt", "desc")
-        );
-        onSnapshot(q, async (snapshot) => {
-          const fetchedPosts = [];
-
-          for (const doc of snapshot.docs) {
-            const postItem = { ...doc.data(), id: doc.id };
-            postItem.formattedDate = formatDate(postItem.createdAt.toDate());
-            postItem.featuredImageUrl = await fetchImage(postItem.imageurl);
-            fetchedPosts.push(postItem);
-          }
-
-          setPosts(fetchedPosts);
-        });
-      } catch (error) {
-        console.error("Error fetching posts:", error);
-      }
-    };
-    fetchPosts();
-  }, [userEmail]);
-
   // Helper function to format date
   const formatDate = (date) => {
     const day = date.getDate();
@@ -121,19 +194,6 @@ export const DashBoard = () => {
     return `${monthName} ${day}, ${year}`;
   };
 
-  const handleImgChange = async (e) => {
-    if (e.target.files[0]) {
-      try {
-        const img = e.target.files[0];
-        const storageRef = ref(storage, `posts/${img.name}`);
-        await uploadBytes(storageRef, img);
-        alert("IMAGE UPLOADED");
-      } catch (error) {
-        console.error("ERROR WITH UPLOAD", error);
-      }
-    }
-  };
-
   const handleDeletePost = async (pId) => {
     const docRef = doc(dbase, "posts", pId);
     await deleteDoc(docRef)
@@ -148,12 +208,26 @@ export const DashBoard = () => {
 
   return (
     <div className="DashboardWrapper w-5/6 h-fit flex gap-4">
-      <div className="postwrapper w-full h-full flex flex-col justify-start gap-5">
+      <div className="postwrapper w-full h-full flex flex-col justify-start gap-5 relative">
         {user && (
           <div className=" text-white bg-secondary button cursor-pointer text-xs px-4 py-2 rounded w-fit">
             <Link to="/GoPremium">Upgrade to Premium</Link>
           </div>
         )}
+        <div className=" w-full bg-tet p-4 rounded-md">
+          <div className=" w-full text-white font-medium mt-4 flex justify-center items-center">
+            Create
+            <span className=" ml-4">
+              <HiPencil />
+            </span>
+          </div>
+
+          <SinglePostForm />
+          <SeriesForm />
+        </div>
+        <div className=" w-full flex justify-center items-center text-white bg-tet py-2 px-4">
+          Your Posts
+        </div>
         {post &&
           post.map((post) => (
             <div
@@ -183,104 +257,67 @@ export const DashBoard = () => {
               <p className=" hidden" id={post.id}>
                 {post.id}
               </p>
-              <button
-                className="delete button text-white bg-red-600 w-fit text-xs py-2 px-4 my-5 rounded-sm"
-                onClick={() => handleDeletePost(post.id)}
-              >
-                Delete
-              </button>
+              {isEditingPost && (
+                <div
+                  className={`w-full z-10 bg-tet rounded px-5 py-4 h-full absolute top-0 left-0 ${
+                    isEditingPost ? "" : "hidden "
+                  }`}
+                >
+                  <div className="edit close w-full flex justify-end">
+                    <IoIosClose
+                      onClick={handleClose}
+                      className="text-white w-12 h-12 button cursor-pointer"
+                    />
+                  </div>
+                  <form
+                    id="editPost"
+                    className="postForm flex flex-col justify-start gap-5 w-full py-8"
+                  >
+                    <input
+                      placeholder="Post Title"
+                      name="title"
+                      value={currentPost.title}
+                      onChange={handleChange}
+                      className=" bg-inherit border-b-2 border-slate-400 outline-none text-white uppercase"
+                    />
+                    <textarea
+                      placeholder="Post body"
+                      name="body"
+                      onChange={handleChange}
+                      value={currentPost.body}
+                      className=" bg-inherit border-b-2 border-slate-400 outline-none text-white h-48"
+                    />
+
+                    <button
+                      onClick={handleSubmit}
+                      className="Btn button bg-secondary text-white text-left text-sm text-nowrap py-2 w-fit px-4 rounded-sm cursor-pointer my-3"
+                    >
+                      Save
+                    </button>
+                  </form>
+                </div>
+              )}
+              <div className=" w-full py-2 h-fit flex gap-5">
+                <button
+                  className="delete button text-white bg-red-600 w-fit text-xs py-2 px-4 my-5 rounded-sm"
+                  onClick={() => handleDeletePost(post.id)}
+                >
+                  Delete
+                </button>
+                <button
+                  className="edit button text-white bg-secondary w-fit text-xs py-2 px-4 my-5 rounded-sm"
+                  onClick={() => handleEdit(post.id)}
+                >
+                  Edit Post
+                </button>
+              </div>
             </div>
           ))}
-        <div className="createPost w-full h-fit p-4 rounded-md">
-          <h2 className=" text-white mb-4 font-bold mt-3"> PUBLISH A POST </h2>
-          <Form
-            method="post"
-            action="/Dashboard"
-            id="createPost"
-            className="postForm flex flex-col justify-start gap-5 w-full"
-          >
-            <input
-              placeholder="Your Name as the author e.g Omoefe Bazunu"
-              name="name"
-              className=" bg-inherit border-b-2 border-slate-400 outline-none text-white"
-            />
-            <input
-              placeholder="Post Title in BLOCK LETTERS"
-              name="title"
-              className=" bg-inherit border-b-2 border-slate-400 outline-none text-white uppercase"
-            />
-            <textarea
-              placeholder="Write your post here"
-              name="body"
-              className=" bg-inherit border-b-2 border-slate-400 outline-none text-white"
-            />
-            <div className="featuredImg flex bg-inherit mt-3 gap-2">
-              <input
-                type="file"
-                name="imageurl"
-                className=" outline-none text-white border-b-2 border-slate-400 w-full"
-                onChange={handleImgChange}
-              />
-            </div>
-
-            <button className="Btn text-white text-left text-sm text-nowrap py-2 w-fit pr-5 pl-2 rounded-sm cursor-pointer mt-3 mb-5">
-              PUBLISH POST
-            </button>
-          </Form>
-        </div>
       </div>
       <SideBar />
     </div>
   );
 };
 
-// // Handle payment gateway integration (replace with your specific code)
-// const handleUpgradeToPremium = async () => {
-//   // Integrate payment gateway API to process payment
-//   // Upon successful payment, update role to "Premium" in Firestore
-//   const userDocRef = dbase.collection("users").doc(auth.currentUser.uid); // Get current user document reference
-//   await userDocRef.update({ role: "Premium" });
-//   alert("Congratulations! You are now a premium user.");
-// };
-
-// import React, { useState, useEffect } from 'react';
-// import firebase from 'firebase/app'; // Import Firebase
-
-// function Dashboard() {
-//   const [user, setUser] = useState(null);
-//   const [userRole, setUserRole] = useState(null);
-
-//   useEffect(() => {
-//     firebase.auth().onAuthStateChanged((user) => {
-//       setUser(user);
-
-//       if (user) {
-//         // Retrieve the user's role from Firestore
-//         firebase.firestore().collection('users').doc(user.uid).get()
-//           .then((doc) => {
-//             setUserRole(doc.data().role);
-//           })
-//           .catch((error) => {
-//             console.error('Error retrieving user role:', error);
-//           });
-//       }
-//     });
-//   }, []);
-
-//   if (!user) {
-//     return <div>Please log in to access your dashboard.</div>;
-//   }
-
-//   if (userRole === 'premium') {
-//     return (
-//       // Render post creation form here
-//     );
-//   } else {
-//     return (
-//       <div>
-//         You are a basic user. Only premium users can create posts.
-//         <a href="/premium-membership">Upgrade to premium</a>
-//       </div>
-//     );
-//   }
-// }
+// npm i react-image-file-resizer
+// import ImageResizer from 'react-image-file-resizer';

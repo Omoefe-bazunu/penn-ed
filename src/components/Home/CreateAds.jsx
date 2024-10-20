@@ -13,6 +13,8 @@ const CreateAds = () => {
     link2: "",
     imageurl3: "",
     link3: "",
+    imageurl4: "",
+    link4: "",
   });
   const [imageFiles, setImageFiles] = useState({});
 
@@ -24,6 +26,7 @@ const CreateAds = () => {
         { imageurl: imageFiles.imageurl, link: adsData.link },
         { imageurl: imageFiles.imageurl2, link: adsData.link2 },
         { imageurl: imageFiles.imageurl3, link: adsData.link3 },
+        { imageurl: imageFiles.imageurl4, link: adsData.link4 },
       ];
 
       // Upload images to Firebase Storage and get download URLs
@@ -31,6 +34,7 @@ const CreateAds = () => {
         uploadImage(imageFiles.imageurl),
         uploadImage(imageFiles.imageurl2),
         uploadImage(imageFiles.imageurl3),
+        uploadImage(imageFiles.imageurl4),
       ]);
 
       // Add the ads data with image URLs to the Firestore collection
@@ -118,8 +122,25 @@ const CreateAds = () => {
             onChange={(e) => setAdsData({ ...adsData, link3: e.target.value })}
           />
         </div>
+        <div className="featuredImg4 flex bg-inherit mt-3 gap-2">
+          <input
+            type="file"
+            name="imageurl4"
+            className="outline-none text-white border-b-2 border-slate-400 w-full"
+            onChange={(e) =>
+              setImageFiles({ ...imageFiles, imageurl4: e.target.files[0] })
+            }
+          />
+          <input
+            placeholder="Type or paste the ads link"
+            name="link4"
+            className="bg-inherit border-b-2 border-slate-400 outline-none text-white"
+            value={adsData.link4}
+            onChange={(e) => setAdsData({ ...adsData, link4: e.target.value })}
+          />
+        </div>
 
-        <button className="Btn text-white text-left text-sm text-nowrap py-2 w-fit pr-5 pl-2 rounded-sm cursor-pointer mt-3 mb-5">
+        <button className="Btn button text-white bg-secondary text-left text-sm text-nowrap py-2 w-fit px-4 rounded-sm cursor-pointer mt-3 mb-5">
           SUBMIT ADS
         </button>
       </Form>

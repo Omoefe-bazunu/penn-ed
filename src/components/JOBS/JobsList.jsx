@@ -1,5 +1,12 @@
 import { SideBar } from "../Home/SideBar";
-import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
+import {
+  collection,
+  onSnapshot,
+  query,
+  orderBy,
+  where,
+  getDocs,
+} from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { dbase, auth } from "../../Firebase";
 import { storage } from "../../Firebase";
@@ -11,14 +18,43 @@ export const JobListing = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState("");
 
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      setUser(user);
-    });
+  // useEffect(() => {
+  //   const unsubscribe = auth.onAuthStateChanged((user) => {
+  //     setUser(user);
+  //   });
 
-    return () => {
-      unsubscribe();
+  //   return () => {
+  //     unsubscribe();
+  //   };
+  // }, []);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const currentUser = auth.currentUser;
+        if (currentUser) {
+          const q = query(
+            collection(dbase, "users"),
+            where("userEmail", "==", currentUser.email)
+          );
+          const querySnapshot = await getDocs(q);
+          if (querySnapshot.docs.length > 0) {
+            const data = querySnapshot.docs[0].data();
+            const { role } = data;
+            if (role == "Premium") {
+              setUser({ role });
+            }
+          } else {
+            console.log("No such document!");
+          }
+        } else {
+          console.log("No current user logged in");
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
     };
+    fetchUserData();
   }, []);
 
   const fetchImage = async (imageurl) => {
@@ -75,10 +111,15 @@ export const JobListing = () => {
     return `${monthName} ${day}, ${year}`;
   };
 
-  if (!user) {
+  if (!user && user !== "Premium") {
     return (
       <>
-        <p className="text-white">Sign Up/Login to see Available JOBS</p>
+        <div className=" flex flex-col justify-center items-center gap-4">
+          <p className="text-white">Upgrade to Premium to see Available JOBS</p>
+          <div className=" text-white bg-secondary button cursor-pointer text-xs px-4 py-2 rounded w-fit">
+            <Link to="/GoPremium">Upgrade to Premium</Link>
+          </div>
+        </div>
       </>
     );
   }
@@ -86,7 +127,7 @@ export const JobListing = () => {
   return (
     <div className="BlogsWrapper w-5/6 h-fit flex gap-4">
       {isLoading ? (
-        <div className="loading-spinner w-full flex justify-center items-center text-white text-xl">
+        <div className="loading-spinner w-32 h-32 pulsate-fwd rounded-full mx-auto p-5 bg-secondary flex justify-center items-center text-white text-sm">
           {" "}
           Loading...
         </div>

@@ -11,10 +11,16 @@ export const SideBar = () => {
     const fetchAds = async () => {
       const adsCollectionRef = collection(dbase, "ads");
       const querySnapshot = await getDocs(adsCollectionRef);
-      const ads = [];
-      querySnapshot.forEach((doc) => {
-        ads.push({ id: doc.id, data: doc.data() });
-      });
+      // const ads = [];
+      // querySnapshot.forEach((doc) => {
+      //   ads.push({ id: doc.id, data: doc.data() });
+      // });
+      // setAdsData(ads);
+      const ads = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        data: doc.data(),
+      }));
+      ads.sort((a, b) => a.data.order - b.data.order); // Sort by order field
       setAdsData(ads);
     };
     fetchAds();
@@ -39,7 +45,7 @@ export const SideBar = () => {
                         key={index}
                         className="ad relative cursor-pointer"
                         href={individualAd.link}
-                        // target="_blank"
+                        target="_blank"
                         rel="noreferrer"
                       >
                         <img

@@ -71,7 +71,7 @@ export const CourseListing = () => {
   return (
     <div className="BlogsWrapper w-5/6 h-fit flex gap-4">
       {isLoading ? (
-        <div className="loading-spinner w-full flex justify-center items-center text-white text-xl">
+        <div className="loading-spinner w-32 h-32 pulsate-fwd rounded-full mx-auto p-5 bg-secondary flex justify-center items-center text-white text-sm">
           {" "}
           Loading...
         </div>

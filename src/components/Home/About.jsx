@@ -40,11 +40,13 @@ export const About = () => {
         </p>
         <p className="">
           You are free to sign up as a BASIC user to post, read, comment and
-          upvote posts on the blog, but you have to upgrade to a PREMIUM user
-          with a monthly subscription to be able to publish a post that can
-          become eligible for earning based on pre-set criteria and to also to
-          get access to the jobs page for remote, onsite and hybrid job offers,
-          specifically those that relates to writing.
+          upvote posts on the blog, as well as get access to the jobs page for
+          remote, onsite and hybrid job offers, specifically those that relates
+          to writing. But you have to upgrade to a PREMIUM user with a monthly
+          subscription to be able to publish a post that can become eligible for
+          earning from our Ads revenue program based on pre-set criteria. As
+          PREMIUM user, you also to get a personalized professional portfolio
+          which you can share with employers when applying.
         </p>
       </div>
     </div>

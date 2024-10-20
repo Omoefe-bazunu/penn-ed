@@ -79,18 +79,25 @@ export const Blogs = () => {
   return (
     <div className="BlogsWrapper w-5/6 h-fit flex gap-4">
       {isLoading ? (
-        <div className="loading-spinner w-full flex justify-center items-center text-white text-xl">
+        <div className="loading-spinner w-32 h-32 pulsate-fwd rounded-full mx-auto p-5 bg-secondary flex justify-center items-center text-white text-sm">
           {" "}
           Loading...
         </div>
       ) : (
         <>
           <div className="post-inner w-full h-fit rounded-md flex justify-start gap-3 flex-col">
-            <div className=" text-yellow-300 text-sm">
+            <div className=" text-white text-sm w-full text-center font-light bg-tet py-1 rounded px-8">
               Registered Users: {count}
             </div>
-            <div className="header w-full h-fit rounded-md py-4 px-5 text-white text-xl justify-center items-center flex">
-              ALL POSTS
+            <div className="header w-full h-fit rounded-md py-4 px-5 text-white justify-center gap-8 items-center flex">
+              <div className=" cursor-pointer">Single Posts</div>
+              <div className=" w-0.5 h-4 bg-white"></div>
+              <Link
+                to={"/Series"}
+                className=" hover:border-b-2 pb-1 cursor-pointer"
+              >
+                Series
+              </Link>
             </div>
             {post &&
               post.map((post) => (

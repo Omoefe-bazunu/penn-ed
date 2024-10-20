@@ -44,5 +44,5 @@ export const SignupForm = async ({ request }) => {
     alert(err.message);
   }
 
-  return redirect("/Login");
+  return redirect("/");
 };

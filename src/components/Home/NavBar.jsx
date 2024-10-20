@@ -8,10 +8,12 @@ import { auth } from "../../Firebase";
 
 export const NavBar = () => {
   const [user, setUser] = useState("");
+  const [verified, setVerified] = useState("");
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       setUser(user);
+      setVerified(user.emailVerified);
     });
 
     return () => {
@@ -27,7 +29,7 @@ export const NavBar = () => {
 
   const [toggle, setToggle] = useState(true);
   return (
-    <div className="NavBar flex flex-col justify-between items-center w-5/6 h-fit pt-5 pb-2 sticky top-0 z-20">
+    <div className="NavBar flex flex-col justify-between items-center w-5/6 bg-primary h-fit pt-5 pb-2 sticky top-0 z-20">
       <div className="main flex justify-between items-center w-full">
         <h2 className="brand text-2xl text-white">PENNED</h2>
         <div className="NavLinks flex justify-end items-center">

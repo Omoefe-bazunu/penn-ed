@@ -65,8 +65,8 @@ const GoPremium = () => {
       <h2 className=" text-white mb-4 font-bold mt-3">GO PREMIUM</h2>
       <p>
         Benefits: <br /> - Earnings from all posts you create <br /> - Get
-        Personal Portfolio in case of job applications <br />- Access to weekly
-        NGN1,000 airtime giveaway for most Upvoted post of the week
+        Personal Portfolio in case of job applications
+        <br />- Access to remote, hybrid and onsite job offers
       </p>
       <form
         id="createAds"
@@ -75,9 +75,11 @@ const GoPremium = () => {
       >
         <div className="featuredImg flex bg-inherit mt-8 gap-2 flex-col">
           <p className=" italic text-sm">
-            Make a transfer of NGN1,000 to the account details below, upload the
-            receipt/screenshot and click the SUBMIT button.{" "}
+            Make a local transfer of NGN1,000 to the account details below or
+            for foreign clients pay $0.61 to the paypal email and upload the
+            receipt/screenshot and click the SUBMIT button.
             <span className="text-yellow-300">
+              {" "}
               Subscription is valid for a MONTH.
             </span>
           </p>
@@ -85,6 +87,9 @@ const GoPremium = () => {
             3098523897 <br />
             OMOEFE BAZUNU <br /> FIRST BANK
           </p>
+
+          <p className=" italic text-sm">Paypal: phenomenalwt03@gmail.com</p>
+
           <input
             type="file"
             name="imageurl"
@@ -95,7 +100,7 @@ const GoPremium = () => {
         <p className=" text-xs italic">
           Upgrade takes less than 30 mins after verification from the Admin.
         </p>
-        <button className="Btn button bg-secondary text-white text-left text-sm text-nowrap py-2 w-fit pr-5 pl-2 rounded-sm cursor-pointer mt-3 mb-5">
+        <button className="Btn button bg-secondary text-white text-left text-sm text-nowrap py-2 w-fit px-5 rounded-sm cursor-pointer mt-3 mb-5">
           SUBMIT
         </button>
       </form>

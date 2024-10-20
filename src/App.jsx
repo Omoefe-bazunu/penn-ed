@@ -31,6 +31,11 @@ import { Premium } from "./components/Home/Premium.jsx";
 import { premiumForm } from "./components/formHandlers/Premium.jsx";
 import GoPremium from "./components/Home/GoPremium.jsx";
 import { PremiumRequests } from "./components/Home/UpgradeRequests.jsx";
+import SeriesForm from "./components/Home/Series/SeriesForm.jsx";
+import { createSeriesForm } from "./components/formHandlers/CreateSeries.jsx";
+import { Series } from "./components/Home/Series/seriesList.jsx";
+import { SeriesDetails } from "./components/Home/Series/SeriesDetails.jsx";
+import SinglePostForm from "./components/Home/Series/SinglePostForm.jsx";
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -47,7 +52,9 @@ const router = createBrowserRouter(
         action={CourseCreation}
       />
       <Route path=":id" element={<BlogDetails />} />
-      <Route path="Dashboard" element={<DashBoard />} action={createPostForm} />
+      <Route path="/Series/:id" element={<SeriesDetails />} />
+
+      <Route path="Dashboard" element={<DashBoard />} />
       <Route path="Contact" element={<Contact />} action={contactForm} />
       <Route path="Signup" element={<SignUp />} action={SignupForm} />
       <Route path="CreateAds" element={<CreateAds />} />
@@ -57,6 +64,17 @@ const router = createBrowserRouter(
       <Route path="Premium" element={<Premium />} action={premiumForm} />
       <Route path="GoPremium" element={<GoPremium />} />
       <Route path="PremiumRequests" element={<PremiumRequests />} />
+      <Route path="Series" element={<Series />} />
+      <Route
+        path="CreateSeries"
+        element={<SeriesForm />}
+        action={createSeriesForm}
+      />
+      <Route
+        path="CreateSinglePost"
+        element={<SinglePostForm />}
+        action={createPostForm}
+      />
       <Route path="*" element={<ErrorPage />} />
     </Route>
   )
