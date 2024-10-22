@@ -33,5 +33,5 @@ export const createSeriesForm = async ({ request }) => {
     alert(error.message);
   }
 
-  return redirect("/CreateSeries");
+  return redirect("/Dashboard");
 };

@@ -42,7 +42,6 @@ export const LoginForm = async ({ request }) => {
     // Handle other errors (e.g., wrong password)
     alert("Wrong email or password. Please try again.");
   }
-
-  // If there's an error or user doesn't exist, stay on the login page
-  return redirect("/login"); // Or the path of your login component
+  
+  return redirect("/login"); 
 };

@@ -8,12 +8,10 @@ import { auth } from "../../Firebase";
 
 export const NavBar = () => {
   const [user, setUser] = useState("");
-  const [verified, setVerified] = useState("");
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       setUser(user);
-      setVerified(user.emailVerified);
     });
 
     return () => {

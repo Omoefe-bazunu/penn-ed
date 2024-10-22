@@ -4,6 +4,7 @@ import {
   createRoutesFromElements,
   RouterProvider,
 } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Blogs } from "./components/Home/Blogs";
 import { RootLayout } from "./components/RootLayout";
 import { About } from "./components/Home/About";
@@ -36,6 +37,8 @@ import { createSeriesForm } from "./components/formHandlers/CreateSeries.jsx";
 import { Series } from "./components/Home/Series/seriesList.jsx";
 import { SeriesDetails } from "./components/Home/Series/SeriesDetails.jsx";
 import SinglePostForm from "./components/Home/Series/SinglePostForm.jsx";
+
+const queryClient = new QueryClient();
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -81,7 +84,11 @@ const router = createBrowserRouter(
 );
 
 function App() {
-  return <RouterProvider router={router} />;
+  return (
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+    </QueryClientProvider>
+  );
 }
 
 export default App;

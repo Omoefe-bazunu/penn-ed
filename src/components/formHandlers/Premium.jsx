@@ -10,38 +10,28 @@ import { dbase } from "../../Firebase";
 
 export const premiumForm = async ({ request }) => {
   const data = await request.formData();
-  const email = data.get("email"); // Extract email address
+  const email = data.get("email");
 
   const form = document.getElementById("premiumForm");
   form.reset();
 
   try {
-    // Create a query to find the user document by email
     const q = query(
       collection(dbase, "users"),
       where("userEmail", "==", email)
     );
-
-    // Get matching documents
     const querySnapshot = await getDocs(q);
-
-    // Check if a document exists with the provided email
     if (querySnapshot.empty) {
       alert("No user found with that email address.");
-      return; // Exit if no user found
+      return;
     }
-
-    // Get the first matching document (assuming only one user per email)
     const userDoc = querySnapshot.docs[0];
-
-    // Update the user document with "Premium" value
     await updateDoc(userDoc.ref, {
-      role: "Premium", // Update the "plan" field to "Premium"
+      role: "Premium",
     });
     alert("user upgrade successful");
   } catch (error) {
     alert(error.message);
-  } finally {
-    return redirect("/Premium");
   }
+  return redirect("/Premium");
 };

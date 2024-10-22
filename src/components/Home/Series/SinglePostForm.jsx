@@ -48,7 +48,7 @@ const SinglePostForm = () => {
   return (
     <div className="createPost w-full h-fit border-b-2 border-white pb-4 mt-4">
       <div className="relative">
-        <h2 className=" text-white mb-1 mt-3"> PUBLISH A POST </h2>
+        <h2 className=" text-white mb-1 mt-3"> Single Post </h2>
         <div className=" w-full flex flex-row justify-end items-center absolute top-0 right-2">
           <button className="expand-button" onClick={toggleContent}>
             {!isExpanded && <p className=" text-2xl text-white">+</p>}

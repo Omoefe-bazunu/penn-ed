@@ -62,7 +62,7 @@ export const Series = () => {
         </div>
       ) : (
         <div className=" text-white w-5/6  mx-auto">
-          <div className="header w-full border-b-2 border-white h-fit py-4 px-5 text-white text-xl justify-center items-center flex">
+          <div className="header w-full border-b-2 border-white h-fit py-4  text-white text-xl items-center flex">
             SERIES: Multiple Episodes
           </div>
           {seriesData.map((series) => (
