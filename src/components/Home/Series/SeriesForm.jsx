@@ -1,6 +1,7 @@
 import { Form } from "react-router-dom";
 import { HiPaperAirplane } from "react-icons/hi2";
 import { useState } from "react";
+import { GiBookCover } from "react-icons/gi";
 
 const SeriesForm = () => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -18,7 +19,10 @@ const SeriesForm = () => {
   return (
     <div className="createPost w-full h-fit mt-8 mb-4">
       <div className=" relative">
-        <h2 className=" text-white mb-1 mt-3">SERIES: Multiple Episodes</h2>
+        <div className=" flex gap-4 text-white items-center">
+          <GiBookCover className=" w-6 h-6" />
+          <h2 className=" text-white">SERIES: Multiple Episodes</h2>
+        </div>
         <div className=" w-full flex flex-row justify-end items-center absolute top-0 right-2">
           <button className="expand-button" onClick={toggleContent}>
             {!isExpanded && <p className=" text-2xl text-white">+</p>}

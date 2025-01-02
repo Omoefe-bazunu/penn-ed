@@ -5,13 +5,21 @@ import { useState, useEffect } from "react";
 
 export const Contact = () => {
   const [backgroundImage, setBackgroundImage] = useState("");
+  const [isImageLoaded, setIsImageLoaded] = useState(false);
 
   useEffect(() => {
     const fetchImage = async () => {
       const imageRef = ref(storage, "General/auth.jpg");
       try {
         const url = await getDownloadURL(imageRef);
-        setBackgroundImage(url);
+
+        // Lazy load image by creating a new Image object
+        const img = new Image();
+        img.src = url;
+        img.onload = () => {
+          setBackgroundImage(url);
+          setIsImageLoaded(true);
+        };
       } catch (error) {
         console.error("Error fetching image:", error);
       }
@@ -21,12 +29,21 @@ export const Contact = () => {
   }, []);
 
   return (
-    <div className="Contact-Wrapper w-5/6 h-fit bg-inherit flex justify-center items-center my-0 mx-auto">
+    <div className="Contact-Wrapper w-5/6 h-fit bg-inherit flex justify-center items-center my-8 mx-auto">
       <div className="ContactInner bg-white rounded-md w-full h-96 flex justify-start items-center">
         <div
           className="featuredImage bg-cover bg-center bg-no-repeat h-full bg-slate-500 rounded-md w-full"
-          style={{ backgroundImage: `url(${backgroundImage})` }}
-        ></div>
+          style={{
+            backgroundImage: isImageLoaded ? `url(${backgroundImage})` : "none",
+          }}
+        >
+          {/* Add a loader or placeholder until the image is loaded */}
+          {!isImageLoaded && (
+            <div className="image-placeholder bg-tet w-full h-full flex items-center justify-center text-white">
+              Loading Image...
+            </div>
+          )}
+        </div>
         <div className="Form flex flex-col justify-start items-start h-full w-full py-12 px-5 gap-8">
           <h2 className="header text-2xl w-full">Contact Admin</h2>
           <Form

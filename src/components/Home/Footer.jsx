@@ -4,7 +4,7 @@ import { FaLinkedinIn } from "react-icons/fa";
 
 export const Footer = () => {
   return (
-    <div className="Footer w-full py-8 flex justify-center items-center  flex-col">
+    <div className="Footer w-full py-8 flex justify-center items-center  flex-col border-t border-white">
       <div className="FooterInner flex justify-center items-center gap-4 w-5/6">
         <a href="https://web.facebook.com/efe.bazunu/" target="_blank">
           <div className="socialIcons button w-8 h-8 flex justify-center items-center rounded-full bg-white">
@@ -26,7 +26,7 @@ export const Footer = () => {
         </a>
       </div>
       <p className="text-xs text-white text-center w-full mt-4 leading 6">
-        Designed By: HIGH-ER ENTERPRISES <br /> +2349043970401
+        Designed By HIGH-ER ENTERPRISES <br /> +2349043970401
       </p>
     </div>
   );

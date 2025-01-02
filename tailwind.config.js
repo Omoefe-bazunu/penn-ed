@@ -4,12 +4,12 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: '#221944',
-        secondary: '#bb4222',
-        tet: '#1b1531'
-      }
+        primary: "#221944",
+        secondary: "#bb4222",
+        tet: "#1b1531",
+        nurs: "#bb4222",
+      },
     },
   },
   plugins: [],
-}
-
+};

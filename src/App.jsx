@@ -37,7 +37,11 @@ import { createSeriesForm } from "./components/formHandlers/CreateSeries.jsx";
 import { Series } from "./components/Home/Series/seriesList.jsx";
 import { SeriesDetails } from "./components/Home/Series/SeriesDetails.jsx";
 import SinglePostForm from "./components/Home/Series/SinglePostForm.jsx";
+import { CreateChallenge } from "./components/Home/Challenge/CreateChallenge.jsx";
+import { ChallengeListing } from "./components/Home/Challenge/ChallengeListing.jsx";
+import { PostDetails } from "./components/Home/Challenge/PostDetails.jsx";
 
+// Create the query client instance
 const queryClient = new QueryClient();
 
 const router = createBrowserRouter(
@@ -68,6 +72,9 @@ const router = createBrowserRouter(
       <Route path="GoPremium" element={<GoPremium />} />
       <Route path="PremiumRequests" element={<PremiumRequests />} />
       <Route path="Series" element={<Series />} />
+      <Route path="ChallengePosts" element={<ChallengeListing />} />
+      <Route path="createChallenge" element={<CreateChallenge />} />
+      <Route path="/ChallengePosts/:customId" element={<PostDetails />} />
       <Route
         path="CreateSeries"
         element={<SeriesForm />}
@@ -86,6 +93,7 @@ const router = createBrowserRouter(
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
+      {/* Provide the query client to the entire app */}
       <RouterProvider router={router} />
     </QueryClientProvider>
   );

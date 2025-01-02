@@ -129,13 +129,13 @@ export const CreateJobs = () => {
   }
 
   return (
-    <div className="DashboardWrapper w-5/6 h-fit flex gap-4">
-      <div className="postwrapper w-full h-full flex flex-col justify-start gap-5">
+    <div className="DashboardWrapper w-5/6 h-fit flex">
+      <div className="postwrapper w-full h-full flex flex-col justify-start border-x border-b">
         {jobs &&
           jobs.map((job) => (
             <div
               key={job.id}
-              className="posts w-full flex flex-col h-fit py-5 px-5 mb-5"
+              className="posts w-full flex flex-col h-fit py-5 px-5 border-t"
             >
               <h2 className=" text-lg text-yellow-300 text-wrap leading-2 mb-1 font-semibold uppercase">
                 {job.title}
@@ -166,7 +166,7 @@ export const CreateJobs = () => {
               </button>
             </div>
           ))}
-        <div className="createPost w-full h-fit p-4 rounded-md">
+        <div className="createPost w-full h-fit p-4 border-t">
           <h2 className=" text-white mb-4 font-bold mt-3"> PUBLISH A JOB </h2>
           <Form
             method="post"
@@ -204,7 +204,6 @@ export const CreateJobs = () => {
           </Form>
         </div>
       </div>
-      <SideBar />
     </div>
   );
 };

@@ -69,7 +69,7 @@ export const CourseListing = () => {
   };
 
   return (
-    <div className="BlogsWrapper w-5/6 h-fit flex gap-4">
+    <div className="BlogsWrapper w-5/6 h-fit flex">
       {isLoading ? (
         <div className="loading-spinner w-32 h-32 pulsate-fwd rounded-full mx-auto p-5 bg-secondary flex justify-center items-center text-white text-sm">
           {" "}
@@ -77,8 +77,8 @@ export const CourseListing = () => {
         </div>
       ) : (
         <>
-          <div className="post-inner w-full h-fit rounded-md flex justify-start gap-3 flex-col">
-            <div className="header w-full h-fit rounded-md py-4 px-5 text-white  text-xl justify-center items-center flex">
+          <div className="post-inner w-full h-fit flex justify-start flex-col ">
+            <div className="header w-full h-fit border-x py-4 px-5 text-white  text-xl justify-center items-center flex">
               LEARN VALUABLE SKILLS
             </div>
             {courses &&

@@ -15,16 +15,14 @@ import {
 import { dbase } from "../../../Firebase";
 
 const Single = ({ userEmail }) => {
-  const [post, setPosts] = useState(null);
-
+  const [posts, setPosts] = useState([]); // Renamed state to `posts`
   const [isEditingPost, setIsEditingPost] = useState(false);
   const [currentPost, setCurrentPost] = useState({
-    // id: post/.id,
     title: "",
     body: "",
   });
 
-  // This fetches the posts made by the user logged in
+  // Fetch posts made by the user logged in
   useEffect(() => {
     const fetchPosts = async () => {
       try {
@@ -33,7 +31,9 @@ const Single = ({ userEmail }) => {
           where("userEmail", "==", userEmail),
           orderBy("createdAt", "desc")
         );
-        onSnapshot(q, async (snapshot) => {
+
+        // Listen for updates in real-time using onSnapshot
+        const unsubscribe = onSnapshot(q, async (snapshot) => {
           const fetchedPosts = [];
 
           for (const doc of snapshot.docs) {
@@ -46,6 +46,9 @@ const Single = ({ userEmail }) => {
           // Set the fetched posts to the state
           setPosts(fetchedPosts);
         });
+
+        // Cleanup subscription on unmount
+        return () => unsubscribe();
       } catch (error) {
         console.error("Error fetching posts:", error);
       }
@@ -53,7 +56,7 @@ const Single = ({ userEmail }) => {
 
     // Fetch posts immediately when the component mounts
     fetchPosts();
-  });
+  }, [posts]); // Added userEmail as a dependency
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -67,42 +70,32 @@ const Single = ({ userEmail }) => {
     event.preventDefault();
 
     try {
-      // Get a reference to the document to be updated
       const postRef = doc(dbase, "posts", currentPost.id);
-
-      // Update the document with the new title and body
       await updateDoc(postRef, {
         title: currentPost.title,
         body: currentPost.body,
       });
 
-      // Reset the form fields
       setCurrentPost({
         title: "",
         body: "",
       });
 
-      // Handle success (e.g., show success message, redirect)
       console.log("Post updated successfully!");
       setIsEditingPost(false);
     } catch (error) {
-      // Handle errors (e.g., show error message)
       console.error("Error updating post:", error);
     }
   };
-
-  //END
 
   const handleClose = () => {
     setIsEditingPost(false);
   };
 
   const handleEdit = (postId) => {
-    // Find the clicked post by ID
-    const clickedPost = post.find((p) => p.id === postId);
+    const clickedPost = posts.find((p) => p.id === postId);
 
     if (clickedPost) {
-      // Update currentPost state with clicked post data
       setCurrentPost({
         id: clickedPost.id,
         title: clickedPost.title,
@@ -114,7 +107,6 @@ const Single = ({ userEmail }) => {
     }
   };
 
-  // This fetches the image for each post
   const fetchImage = async (imageurl) => {
     if (imageurl) {
       const imageRef = ref(storage, `posts/${imageurl}`);
@@ -126,9 +118,9 @@ const Single = ({ userEmail }) => {
         return null;
       }
     }
+    return null; // Return null if imageurl is not provided
   };
 
-  // Helper function to format date
   const formatDate = (date) => {
     const day = date.getDate();
     const month = date.getMonth();
@@ -155,7 +147,7 @@ const Single = ({ userEmail }) => {
     await deleteDoc(docRef)
       .then(() => {
         alert("Post deleted successfully!");
-        setPosts(post.filter((post) => post.id !== pId)); // Update state with filtered posts
+        setPosts((prevPosts) => prevPosts.filter((post) => post.id !== pId));
       })
       .catch((error) => {
         alert("Error deleting Post: ", error);
@@ -164,13 +156,13 @@ const Single = ({ userEmail }) => {
 
   return (
     <div>
-      {post &&
-        post.map((post) => (
+      {posts &&
+        posts.map((post) => (
           <div
             key={post.id}
-            className="posts w-full flex flex-col h-fit py-5 px-5 mb-5"
+            className="posts w-full flex flex-col h-fit py-5 px-5 border-t border-x"
           >
-            <h2 className=" text-lg text-yellow-300 text-wrap leading-2 mb-1 font-semibold uppercase">
+            <h2 className="text-lg text-yellow-300 text-wrap leading-2 mb-1 font-semibold uppercase">
               {post.title}
             </h2>
             <p className="date text-xs text-white w-fit">
@@ -182,16 +174,13 @@ const Single = ({ userEmail }) => {
               <img
                 src={post.featuredImageUrl}
                 alt=""
-                className=" w-24 h-24 bg-cover bg-center bg-no-repeat mt-3 mb-5 text-white"
+                className="w-24 h-24 bg-cover bg-center bg-no-repeat mt-3 mb-5 text-white"
               />
             ) : (
-              <img />
+              <div className="w-24 h-24 bg-gray-500 mt-3 mb-5"></div>
             )}
             <p className="postBody text-white whitespace-pre-wrap">
               {post.body.slice(0, 200)}...
-            </p>
-            <p className=" hidden" id={post.id}>
-              {post.id}
             </p>
             {isEditingPost && (
               <div
@@ -214,14 +203,14 @@ const Single = ({ userEmail }) => {
                     name="title"
                     value={currentPost.title}
                     onChange={handleChange}
-                    className=" bg-inherit border-b-2 border-slate-400 outline-none text-white uppercase"
+                    className="bg-inherit border-b-2 border-slate-400 outline-none text-white uppercase"
                   />
                   <textarea
                     placeholder="Post body"
                     name="body"
                     onChange={handleChange}
                     value={currentPost.body}
-                    className=" bg-inherit border-b-2 border-slate-400 outline-none text-white h-48"
+                    className="bg-inherit border-b-2 border-slate-400 outline-none text-white h-48"
                   />
 
                   <button
@@ -233,7 +222,7 @@ const Single = ({ userEmail }) => {
                 </form>
               </div>
             )}
-            <div className=" w-full py-2 h-fit flex gap-5">
+            <div className="w-full py-2 h-fit flex gap-5">
               <button
                 className="delete button text-white bg-red-600 w-fit text-xs py-2 px-4 my-5 rounded-sm"
                 onClick={() => handleDeletePost(post.id)}

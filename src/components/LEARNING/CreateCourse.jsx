@@ -130,13 +130,13 @@ export const CreateCourse = () => {
   }
 
   return (
-    <div className="DashboardWrapper w-5/6 h-fit flex gap-4">
-      <div className="postwrapper w-full h-full flex flex-col justify-start gap-5">
+    <div className="DashboardWrapper w-5/6 h-fit flex">
+      <div className="postwrapper w-full h-full flex flex-col justify-start">
         {courses &&
           courses.map((course) => (
             <div
               key={course.id}
-              className="posts w-full flex flex-col h-fit py-5 px-5 mb-5"
+              className="posts w-full flex flex-col h-fit py-5 px-5 border-x border-b"
             >
               <h2 className=" text-lg text-yellow-300 text-wrap leading-2 mb-1 font-semibold uppercase">
                 {course.title}
@@ -170,7 +170,7 @@ export const CreateCourse = () => {
               </button>
             </div>
           ))}
-        <div className="createPost w-full h-fit p-4 rounded-md">
+        <div className="createPost w-full h-fit p-4 border-x border-b">
           <h2 className=" text-white mb-4 font-bold mt-3">
             {" "}
             PUBLISH A COURSE{" "}
@@ -211,7 +211,6 @@ export const CreateCourse = () => {
           </Form>
         </div>
       </div>
-      <SideBar />
     </div>
   );
 };

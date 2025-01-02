@@ -130,7 +130,7 @@ const SeriesEpisodes = ({ userEmail }) => {
         post.map((post) => (
           <div
             key={post.eId}
-            className="posts w-full flex flex-col h-fit py-5 px-5 mb-5"
+            className="posts w-full flex flex-col h-fit py-5 px-5 border-x border-y"
           >
             <h2 className=" text-lg text-yellow-300 text-wrap leading-2 mb-1 font-semibold uppercase">
               {post.episodeTitle}

@@ -4,6 +4,7 @@ import ImageResizer from "react-image-file-resizer";
 import { ref, uploadBytes } from "firebase/storage";
 import { storage } from "../../../Firebase";
 import { useState } from "react";
+import { CgNotes } from "react-icons/cg";
 
 const SinglePostForm = () => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -46,9 +47,13 @@ const SinglePostForm = () => {
   };
 
   return (
-    <div className="createPost w-full h-fit border-b-2 border-white pb-4 mt-4">
+    <div className="createPost w-full h-fit border-b-2 border-white pb-4 mt-6">
       <div className="relative">
-        <h2 className=" text-white mb-1 mt-3"> Single Post </h2>
+        <div className=" flex gap-4 items-center text-white">
+          <CgNotes className="w-6 h-6" />
+          <h2 className=" text-white"> Single Post </h2>
+        </div>
+
         <div className=" w-full flex flex-row justify-end items-center absolute top-0 right-2">
           <button className="expand-button" onClick={toggleContent}>
             {!isExpanded && <p className=" text-2xl text-white">+</p>}

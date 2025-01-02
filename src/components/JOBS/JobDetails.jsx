@@ -82,11 +82,11 @@ export const JobDetails = () => {
     return `${monthName} ${day}, ${year}`;
   };
   return (
-    <div className="BlogDetailsWrapper w-5/6 h-fit flex gap-4">
+    <div className="BlogDetailsWrapper w-5/6 h-fit flex ">
       {/* This code with 'post' preceding the div, checks if the post state has a value meaning the fetch document function was successful before displaying the elements with the post details */}
       {job && (
-        <div className="postwrapper w-full h-full flex flex-col justify-start items-center gap-5">
-          <div className="post w-full h-fit bg-slate-600 rounded-md relative py-5 px-4">
+        <div className="postwrapper w-full h-full flex flex-col justify-start items-center">
+          <div className="post w-full h-fit bg-slate-600 relative py-5 px-4 border-x">
             <div className="post1 felx flex-col justify-start gap-4">
               <h2 className=" text-yellow-300 my-1 font-semibold uppercase">
                 {job.title}

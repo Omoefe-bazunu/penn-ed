@@ -127,7 +127,7 @@ export const Comments = ({ postId }) => {
   };
 
   return (
-    <div className="commentbox w-full h-fit bg-slate-600 p-4 rounded-md authenticated">
+    <div className="commentbox w-full h-fit bg-slate-600 p-4 border authenticated">
       <h2 className=" text-white mb-4 font-bold mt-3"> COMMENTS </h2>
       <div className="comments text-white w-full h-fit">
         {comment &&

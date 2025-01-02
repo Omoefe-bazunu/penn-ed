@@ -1,73 +1,55 @@
-import { SideBar } from "./SideBar";
+import { SideBar } from "../SideBar";
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { collection, doc, onSnapshot } from "firebase/firestore";
-import { dbase } from "../../Firebase";
-import { ref, getDownloadURL } from "firebase/storage";
-import { storage } from "../../Firebase";
-import { Comments } from "./Comments";
-import { analytics } from "../../Firebase";
+import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
+import { dbase } from "../../../Firebase";
+import { analytics } from "../../../Firebase";
 import { logEvent } from "firebase/analytics";
 import { runTransaction } from "firebase/firestore";
-import { auth } from "../../Firebase";
+import { auth } from "../../../Firebase";
 
-export const BlogDetails = () => {
+export const PostDetails = () => {
   const [post, setPost] = useState(null);
-  const { id } = useParams();
-  const [ImageSrc, setImageSrc] = useState("");
+  const { customId } = useParams();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const postId = id;
+    const postCustomId = customId;
     logEvent(analytics, "select_content", {
       content_type: "post",
-      content_id: postId,
+      content_id: postCustomId,
     });
-  }, [id]);
-
-  //This code fetches the post image from the firebase storage if the post exists or has a value
-  const fetchImage = async () => {
-    if (post) {
-      const imageRef = ref(storage, `posts/${post.imageurl}`);
-      try {
-        const url = await getDownloadURL(imageRef);
-        setImageSrc(url);
-      } catch (error) {
-        console.error("Error fetching image:", error);
-      }
-    }
-  };
+  }, [customId]);
 
   // This fetches the Post
   useEffect(() => {
-    const colRef = collection(dbase, "posts");
-    const postRef = doc(colRef, id);
+    const colRef = collection(dbase, "challengentry");
+    const g = Number(customId);
+    const q = query(colRef, where("customId", "==", g));
 
-    onSnapshot(
-      postRef,
-      (doc) => {
-        if (doc.exists()) {
-          const postDetails = { ...doc.data(), id: doc.id };
-          postDetails.formattedDate = formatDate(
-            postDetails.createdAt.toDate()
-          ); // This calls the date conversion function, passing the timestamp as the parameter and converting first to a general date
-          setPost(postDetails);
-          setIsLoading(false);
-          // console.log(post);
-        } else {
-          console.log(`Post with ID ${id} does not exist.`);
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        if (snapshot.empty) {
+          console.log(`Post with customId ${customId} does not exist.`);
+          setPost(null); // Set job to null if not found
+          return; // Early exit if no documents found
         }
+
+        const postDetails = snapshot.docs[0].data(); // Get data from the first document
+        postDetails.id = snapshot.docs[0].id; // Set the ID
+        postDetails.formattedDate = formatDate(postDetails.timestamp.toDate()); // Add formatted date
+        console.log(`lop ${postDetails}`);
+        setPost(postDetails);
       },
       (error) => {
         console.error("Error fetching post:", error);
       }
     );
-  }, [id]);
 
-  // This runs the image fetching function anytime there's a change to the post state.
-  useEffect(() => {
-    fetchImage();
-  }, [post]);
+    // Cleanup function to unsubscribe on unmount
+    return () => unsubscribe();
+  }, [customId]);
 
   // This code converts the timestamp for the post to a readable date that users can see
   const formatDate = (date) => {
@@ -140,7 +122,7 @@ export const BlogDetails = () => {
   };
 
   return (
-    <div className="BlogDetailsWrapper w-5/6 h-fit flex">
+    <div className="BlogDetailsWrapper w-5/6 h-fit flex gap-4">
       {isLoading ? (
         <div className="loading-spinner w-32 h-32 pulsate-fwd rounded-full mx-auto p-5 bg-secondary flex justify-center items-center text-white text-sm">
           {" "}
@@ -149,8 +131,8 @@ export const BlogDetails = () => {
       ) : (
         <>
           {post && (
-            <div className="postwrapper w-full h-full flex flex-col justify-start items-center">
-              <div className="post w-full h-fit bg-slate-600 border-x border-b relative py-5 px-4 mb-8">
+            <div className="postwrapper w-full h-full flex flex-col justify-start items-center gap-5">
+              <div className="post w-full h-fit bg-slate-600 rounded-md relative py-5 px-4">
                 <div className="post1 felx flex-col justify-start gap-4">
                   <h2 className=" text-yellow-300 my-1 font-semibold uppercase">
                     {post.title}
@@ -162,16 +144,11 @@ export const BlogDetails = () => {
                       {post.upvotes} Upvote
                     </div>
                   </div>
-                  <img
-                    src={ImageSrc}
-                    alt="featured-Image"
-                    className=" w-50 h-50  mb-8 bg-cover bg-center bg-no-repeat text-white"
-                  ></img>
                   <p className="text-white mb-8 whitespace-pre-wrap">
                     {post.body}
                   </p>
                 </div>
-                <div className="reactions absolute -bottom-3 -right-2 cursor-pointer w-10 h-10 rounded-full bg-white authenticated">
+                <div className="reactions absolute bottom-0 -right-2 cursor-pointer w-10 h-10 rounded-full bg-white authenticated">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 24 24"
@@ -185,7 +162,6 @@ export const BlogDetails = () => {
                   </svg>
                 </div>
               </div>
-              <Comments postId={post.id} />
             </div>
           )}
           <SideBar />

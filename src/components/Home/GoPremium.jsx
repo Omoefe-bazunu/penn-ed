@@ -64,8 +64,8 @@ const GoPremium = () => {
     <div className=" createPost w-5/6 h-fit p-4 rounded-md flex flex-col text-white">
       <h2 className=" text-white mb-4 font-bold mt-3">GO PREMIUM</h2>
       <p>
-        Benefits: <br /> - Earnings from all posts you create <br /> - Get
-        Personal Portfolio in case of job applications
+        Benefits: <br /> - Ads revenue sharing rights from all posts you create{" "}
+        <br /> - Personal Portfolio in case of job applications
         <br />- Access to remote, hybrid and onsite job offers
       </p>
       <form

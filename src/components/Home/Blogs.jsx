@@ -4,136 +4,168 @@ import { useEffect, useState } from "react";
 import { dbase } from "../../Firebase";
 import { storage } from "../../Firebase";
 import { ref, getDownloadURL } from "firebase/storage";
-import { Link } from "react-router-dom";
+import { NavLink } from "react-router-dom";
+import { HiArrowDown } from "react-icons/hi2";
+import { ChallengeInfo } from "./Challenge/ChallengeInfo";
+import { CgNotes } from "react-icons/cg";
+import { GiBookCover } from "react-icons/gi";
+import { GiTrophyCup } from "react-icons/gi";
 
 export const Blogs = () => {
-  const [post, setPosts] = useState(null);
+  const [posts, setPosts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [count, setCount] = useState(0);
+  const [visiblePosts, setVisiblePosts] = useState(5); // Initial number of posts to display
 
   const fetchImage = async (imageurl) => {
-    if (imageurl) {
-      const imageRef = ref(storage, `posts/${imageurl}`);
-      try {
-        const url = await getDownloadURL(imageRef);
-        return url;
-      } catch (error) {
-        console.error("Error fetching image:", error);
-        return null;
-      }
+    if (!imageurl) return null;
+    const imageRef = ref(storage, `posts/${imageurl}`);
+    try {
+      return await getDownloadURL(imageRef);
+    } catch (error) {
+      console.error("Error fetching image:", error);
+      return null;
     }
   };
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(
+    const unsubscribeUsers = onSnapshot(
       collection(dbase, "users"),
-      (querySnapshot) => {
-        setCount(querySnapshot.size);
-      }
+      (querySnapshot) => setCount(querySnapshot.size)
     );
 
-    return () => unsubscribe();
+    return () => unsubscribeUsers(); // Cleanup
   }, []);
 
   useEffect(() => {
     const fetchPosts = async () => {
       const q = query(collection(dbase, "posts"), orderBy("createdAt", "desc"));
-      onSnapshot(q, async (snapshot) => {
-        const posts = [];
-        for (const doc of snapshot.docs) {
-          const postItem = { ...doc.data(), id: doc.id };
-          postItem.formattedDate = formatDate(postItem.createdAt.toDate()); // Add formatted date
-          postItem.featuredImageUrl = await fetchImage(postItem.imageurl); // Fetch image URL
-          posts.push(postItem);
-        }
-        setPosts(posts);
+      const unsubscribePosts = onSnapshot(q, async (snapshot) => {
+        const fetchedPosts = await Promise.all(
+          snapshot.docs.map(async (doc) => {
+            const data = doc.data();
+            return {
+              ...data,
+              id: doc.id,
+              formattedDate: formatDate(data.createdAt.toDate()),
+              featuredImageUrl: await fetchImage(data.imageurl),
+            };
+          })
+        );
+        setPosts(fetchedPosts);
         setIsLoading(false);
       });
+
+      return () => unsubscribePosts(); // Cleanup
     };
 
     fetchPosts();
   }, []);
 
-  // Helper function to format date
   const formatDate = (date) => {
-    const day = date.getDate();
-    const month = date.getMonth();
-    const monthName = [
-      "January",
-      "February",
-      "March",
-      "April",
-      "May",
-      "June",
-      "July",
-      "August",
-      "September",
-      "October",
-      "November",
-      "December",
-    ][month];
-    const year = date.getFullYear();
-    return `${monthName} ${day}, ${year}`;
+    const options = { year: "numeric", month: "long", day: "numeric" };
+    return date.toLocaleDateString("en-US", options);
   };
 
+  const loadMorePosts = () => setVisiblePosts((prev) => prev + 5);
+
   return (
-    <div className="BlogsWrapper w-5/6 h-fit flex gap-4">
+    <div className="BlogsWrapper w-5/6 h-fit flex">
       {isLoading ? (
-        <div className="loading-spinner w-32 h-32 pulsate-fwd rounded-full mx-auto p-5 bg-secondary flex justify-center items-center text-white text-sm">
-          {" "}
+        <div
+          className="loading-spinner w-32 h-32 pulsate-fwd rounded-full mx-auto p-5 bg-secondary flex justify-center items-center text-white text-sm"
+          role="status"
+          aria-live="polite"
+        >
           Loading...
         </div>
       ) : (
         <>
-          <div className="post-inner w-full h-fit rounded-md flex justify-start gap-3 flex-col">
-            <div className=" text-white text-sm w-full text-center font-light bg-tet py-1 rounded px-8">
+          <div className="post-inner w-full h-fit  flex justify-start flex-col border-x border-b border-white">
+            <div className="text-white text-sm w-full text-center font-light bg-tet py-4 rounded px-8 hidden">
               Registered Users: {count}
             </div>
-            <div className="header w-full h-fit rounded-md py-4 px-5 text-white justify-center gap-8 items-center flex">
-              <div className=" cursor-pointer">Single Posts</div>
-              <div className=" w-0.5 h-4 bg-white"></div>
-              <Link
-                to={"/Series"}
-                className=" hover:border-b-2 pb-1 cursor-pointer"
+            <ChallengeInfo />
+            <header className="header w-full h-fit py-4 px-5 text-white flex justify-center gap-6 lg:gap-12 items-center">
+              <div className="cursor-pointer flex items-center gap-2">
+                <CgNotes className="w-4 h-4 lg:h-6 lg:w-6" />
+                <p className="text-sm lg:text-normal text-nowrap">
+                  Single Posts
+                </p>
+              </div>
+              {/* <div className="w-0.5 h-4 bg-white"></div> */}
+              <NavLink
+                to="/Series"
+                className="hover:text-yellow-300 cursor-pointer"
               >
-                Series
-              </Link>
-            </div>
-            {post &&
-              post.map((post) => (
-                <Link to={post.id} key={post.title}>
-                  <div className="posts w-full h-fit py-5 px-5 mb-5">
-                    <h2 className=" text-lg text-yellow-300 text-wrap font-semibold leading-2 mb-1 uppercase">
-                      {post.title}
-                    </h2>
-                    <div className="features  flex justify-start w-fit gap-2 text-white text-xs mb-4">
-                      <div className="author">
-                        {post.authorName} <span className="mx-1">:</span>{" "}
-                        {post.formattedDate}
-                        <br />
-                        {post.upvotes} Upvote
-                      </div>
-                    </div>
-                    {post.featuredImageUrl ? (
-                      <img
-                        src={post.featuredImageUrl}
-                        alt=""
-                        className=" w-24 h-24 bg-cover bg-center bg-no-repeat mt-3 mb-5 text-white"
-                      />
-                    ) : (
-                      <img />
-                    )}
-                    <p className="postBody text-white whitespace-pre-wrap">
-                      {post.body.slice(0, 200)}...
-                    </p>
-                    <p className=" text-yellow-300 text-sm mt-2 mb-4">
-                      Read Full Content....
-                    </p>
+                <div className=" flex items-center gap-2">
+                  <GiBookCover className=" w-4 h-4 lg:h-6 lg:w-6" />
+                  <p className="text-sm lg:text-normal text-nowrap">Series</p>
+                </div>
+              </NavLink>
+              {/* <div className="w-0.5 h-4 bg-white"></div> */}
+              <NavLink
+                to="/ChallengePosts"
+                className="hover:text-yellow-300 cursor-pointer"
+              >
+                <div className=" flex items-center gap-2">
+                  <GiTrophyCup className="w-4 h-4 lg:h-6 lg:w-6" />
+                  <p className="text-sm lg:text-normal text-nowrap">
+                    Challenge Posts
+                  </p>
+                </div>
+              </NavLink>
+            </header>
+            {posts.slice(0, visiblePosts).map((post) => (
+              <article
+                key={post.id}
+                className="posts w-full h-fit py-5 px-5 border-white border-t"
+              >
+                <h2 className="text-lg text-yellow-300 font-semibold leading-2 mb-1 uppercase">
+                  {post.title}
+                </h2>
+                <div className="features flex justify-start w-fit gap-2 text-white text-xs mb-4">
+                  <div className="author">
+                    {post.authorName} <span className="mx-1">:</span>{" "}
+                    {post.formattedDate}
+                    <br />
+                    {post.upvotes} Upvotes
                   </div>
-                </Link>
-              ))}
+                </div>
+                {post.featuredImageUrl ? (
+                  <img
+                    src={post.featuredImageUrl}
+                    alt={`Featured image for ${post.title}`}
+                    loading="lazy"
+                    className="w-24 h-24 bg-cover bg-center rounded mt-3 mb-5"
+                  />
+                ) : (
+                  <img
+                    alt="Placeholder for missing image"
+                    className="text-white text-xs"
+                  />
+                )}
+                <p className="postBody text-white whitespace-pre-wrap mt-4">
+                  {post.body.slice(0, 200)}...
+                </p>
+                <NavLink
+                  to={post.id}
+                  className="text-yellow-300 text-sm mt-2 mb-4"
+                >
+                  Read Full Content
+                </NavLink>
+              </article>
+            ))}
+            {visiblePosts < posts.length && (
+              <button
+                onClick={loadMorePosts}
+                className="load-more-button w-fit self-center mt-4 p-4 bg-tet text-white rounded-full"
+                aria-label="Load more posts"
+              >
+                <HiArrowDown className="font-bold" />
+              </button>
+            )}
           </div>
-
           <SideBar />
         </>
       )}

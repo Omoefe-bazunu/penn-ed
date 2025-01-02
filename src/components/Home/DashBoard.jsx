@@ -6,10 +6,11 @@ import { collection, query, where, getDocs } from "firebase/firestore";
 import { dbase } from "../../Firebase";
 import SeriesForm from "./Series/SeriesForm";
 import SinglePostForm from "./Series/SinglePostForm";
-import { Link } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import Single from "./PostControl/Single";
-import { Series } from "./Series/seriesList";
+// import { Series } from "./Series/seriesList";
 import SeriesEpisodes from "./PostControl/SeriesEpisodes";
+import ChallengeForm from "./Challenge/PostSubmission";
 
 export const DashBoard = () => {
   const [user, setUser] = useState(null);
@@ -51,27 +52,27 @@ export const DashBoard = () => {
   }, [userEmail]);
 
   return (
-    <div className="DashboardWrapper w-5/6 h-fit flex gap-4">
-      <div className="postwrapper w-full h-full flex flex-col justify-start gap-5 relative">
+    <div className="DashboardWrapper w-5/6 h-fit flex">
+      <div className="postwrapper w-full h-full flex flex-col justify-start relative">
         {user && (
           <div className=" text-white bg-secondary button cursor-pointer text-xs px-4 py-2 rounded w-fit">
-            <Link to="/GoPremium">Upgrade to Premium</Link>
+            <NavLink to="/GoPremium">Upgrade to Premium</NavLink>
           </div>
         )}
-        <div className=" w-full bg-tet p-4 rounded-md">
+        <div className=" w-full bg-tet p-4 border-x border-b">
           <div className=" w-full text-white font-medium mt-4 flex justify-center items-center">
             Create
             <span className=" ml-4">
               <HiPencil />
             </span>
           </div>
-
+          <ChallengeForm />
           <SinglePostForm />
           <SeriesForm />
         </div>
-        <div className=" w-full flex justify-center items-center text-white bg-tet py-2">
+        <p className=" w-full flex justify-center items-center text-white bg-tet py-8 border-x">
           Your Posts
-        </div>
+        </p>
         <Single userEmail={userEmail} />
         <SeriesEpisodes userEmail={userEmail} />
       </div>

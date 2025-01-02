@@ -111,21 +111,21 @@ export const JobListing = () => {
     return `${monthName} ${day}, ${year}`;
   };
 
-  if (!user && user !== "Premium") {
-    return (
-      <>
-        <div className=" flex flex-col justify-center items-center gap-4">
-          <p className="text-white">Upgrade to Premium to see Available JOBS</p>
-          <div className=" text-white bg-secondary button cursor-pointer text-xs px-4 py-2 rounded w-fit">
-            <Link to="/GoPremium">Upgrade to Premium</Link>
-          </div>
-        </div>
-      </>
-    );
-  }
+  // if (!user && user !== "Premium") {
+  //   return (
+  //     <>
+  //       <div className=" flex flex-col justify-center items-center gap-4">
+  //         <p className="text-white">Upgrade to Premium to see Available JOBS</p>
+  //         <div className=" text-white bg-secondary button cursor-pointer text-xs px-4 py-2 rounded w-fit">
+  //           <Link to="/GoPremium">Upgrade to Premium</Link>
+  //         </div>
+  //       </div>
+  //     </>
+  //   );
+  // }
 
   return (
-    <div className="BlogsWrapper w-5/6 h-fit flex gap-4">
+    <div className="BlogsWrapper w-5/6 h-fit flex ">
       {isLoading ? (
         <div className="loading-spinner w-32 h-32 pulsate-fwd rounded-full mx-auto p-5 bg-secondary flex justify-center items-center text-white text-sm">
           {" "}
@@ -133,14 +133,14 @@ export const JobListing = () => {
         </div>
       ) : (
         <>
-          <div className="post-inner w-full h-fit rounded-md flex justify-start gap-3 flex-col">
-            <div className="header w-full h-fit rounded-md py-4 px-5 text-white text-xl justify-center items-center flex">
+          <div className="post-inner w-full h-fit border-x border-b flex justify-start flex-col">
+            <div className="header w-full h-fit py-4 px-5 text-white text-xl justify-center items-center flex">
               AVAILABLE JOBS
             </div>
             {jobs &&
               jobs.map((job) => (
                 <Link to={`/JobsList/${job.customId}`} key={job.id}>
-                  <div className="posts w-full h-fit py-5 px-5 mb-5">
+                  <div className="posts w-full h-fit py-5 px-5 border-t">
                     <h2 className=" text-lg text-yellow-300 text-wrap font-semibold leading-2 mb-1 uppercase">
                       {job.title}
                     </h2>
@@ -157,7 +157,7 @@ export const JobListing = () => {
                       {job.body.slice(0, 200)}...
                     </p>
                     <p className=" text-yellow-300 text-sm mt-2 mb-4">
-                      Read Full Content....
+                      Read Full Content
                     </p>
                   </div>
                 </Link>

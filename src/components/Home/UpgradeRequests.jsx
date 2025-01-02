@@ -1,8 +1,6 @@
 import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { dbase, auth } from "../../Firebase";
-import { storage } from "../../Firebase";
-import { ref, getDownloadURL } from "firebase/storage";
 
 export const PremiumRequests = () => {
   const [jobs, setJobs] = useState(null);
@@ -18,19 +16,6 @@ export const PremiumRequests = () => {
       unsubscribe();
     };
   }, []);
-
-  //   const fetchImage = async (imageurl) => {
-  //     if (imageurl) {
-  //       const imageRef = ref(storage, `premium/${imageurl}`);
-  //       try {
-  //         const url = await getDownloadURL(imageRef);
-  //         return url;
-  //       } catch (error) {
-  //         console.error("Error fetching image:", error);
-  //         return null;
-  //       }
-  //     }
-  //   };
 
   useEffect(() => {
     const fetchJobs = async () => {
