@@ -4,10 +4,12 @@ export default {
   theme: {
     extend: {
       colors: {
-        primary: "#221944",
-        secondary: "#bb4222",
-        tet: "#1b1531",
-        nurs: "#bb4222",
+        primary: "#0f766e", // Teal for accents
+        secondary: "#4b5563", // Slate for text
+      },
+      fontFamily: {
+        inter: ["Inter", "sans-serif"],
+        poppins: ["Poppins", "sans-serif"],
       },
     },
   },

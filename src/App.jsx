@@ -1,101 +1,95 @@
-import {
-  Route,
-  createBrowserRouter,
-  createRoutesFromElements,
-  RouterProvider,
-} from "react-router-dom";
+// src/App.jsx
+import { lazy, Suspense } from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Blogs } from "./components/Home/Blogs";
-import { RootLayout } from "./components/RootLayout";
-import { About } from "./components/Home/About";
-import { LogIn } from "./components/auth/SignIn";
-import { PwdReset } from "./components/auth/PwdRT1";
-import { SignUp } from "./components/auth/SignUp";
-import { Contact } from "./components/Home/Contact";
-import { BlogDetails } from "./components/Home/BlogDetails";
-import { DashBoard } from "./components/Home/DashBoard";
-import { contactForm } from "./components/formHandlers/Contact";
-import { LoginForm } from "./components/formHandlers/SignIn";
-import { SignupForm } from "./components/formHandlers/Signup";
-import { createPostForm } from "./components/formHandlers/CreatePost";
-import { Messages } from "./components/Home/Messages";
-import CreateAds from "./components/Home/CreateAds";
-import { JobListing } from "./components/JOBS/JobsList";
-import { JobDetails } from "./components/JOBS/JobDetails";
-import { CreateJobs } from "./components/JOBS/CreateJobs";
-import { CourseListing } from "./components/LEARNING/CourseList";
-import { CreateCourse } from "./components/LEARNING/CreateCourse.jsx";
-import { jobCreation } from "./components/formHandlers/Jobs.jsx";
-import { CourseCreation } from "./components/formHandlers/Course.jsx";
-import { ErrorPage } from "./components/ErrorPage.jsx";
-import { Premium } from "./components/Home/Premium.jsx";
-import { premiumForm } from "./components/formHandlers/Premium.jsx";
-import GoPremium from "./components/Home/GoPremium.jsx";
-import { PremiumRequests } from "./components/Home/UpgradeRequests.jsx";
-import SeriesForm from "./components/Home/Series/SeriesForm.jsx";
-import { createSeriesForm } from "./components/formHandlers/CreateSeries.jsx";
-import { Series } from "./components/Home/Series/seriesList.jsx";
-import { SeriesDetails } from "./components/Home/Series/SeriesDetails.jsx";
-import SinglePostForm from "./components/Home/Series/SinglePostForm.jsx";
-import { CreateChallenge } from "./components/Home/Challenge/CreateChallenge.jsx";
-import { ChallengeListing } from "./components/Home/Challenge/ChallengeListing.jsx";
-import { PostDetails } from "./components/Home/Challenge/PostDetails.jsx";
+import Navbar from "./components/ui/bottomTab";
+import TopNavbar from "./components/ui/topTab";
 
-// Create the query client instance
-const queryClient = new QueryClient();
+// import AuthContextProvider from "./context/AuthContext"; // TODO: Uncomment when AuthContext is created
+import Home from "./pages/Home";
+import About from "./pages/About/Index";
+import Contact from "./pages/Contact/Index";
+import NotFound from "./pages/NotFound";
 
-const router = createBrowserRouter(
-  createRoutesFromElements(
-    <Route path="/" element={<RootLayout />}>
-      <Route index element={<Blogs />} />
-      <Route path="About" element={<About />} />
-      <Route path="JobsList" element={<JobListing />} />
-      <Route path="/JobsList/:jobPath" element={<JobDetails />} />
-      <Route path="CreateJobs" element={<CreateJobs />} action={jobCreation} />
-      <Route path="CoursesList" element={<CourseListing />} />
-      <Route
-        path="CreateCourse"
-        element={<CreateCourse />}
-        action={CourseCreation}
-      />
-      <Route path=":id" element={<BlogDetails />} />
-      <Route path="/Series/:id" element={<SeriesDetails />} />
+// Lazy-loaded pages
+const Dashboard = lazy(() => import("./pages/Dashboard/Index"));
+const Portfolio = lazy(() => import("./pages/Dashboard/Portfolio"));
+const Settings = lazy(() => import("./pages/Dashboard/Settings"));
+const Posts = lazy(() => import("./pages/Posts/Index"));
+const PostDetails = lazy(() => import("./pages/Posts/PostDetails"));
+const Jobs = lazy(() => import("./pages/Jobs/Index"));
+const Courses = lazy(() => import("./pages/Courses/Index"));
+const Competitions = lazy(() => import("./pages/Competitions/Index"));
+const Login = lazy(() => import("./pages/Auth/Login"));
+const Signup = lazy(() => import("./pages/Auth/Signup"));
+// const ResetPassword = lazy(() => import("./pages/Auth/ResetPassword")); // TODO: Uncomment when ResetPassword page is created
+// const JobDetails = lazy(() => import("./pages/Jobs/JobDetails")); // TODO: Uncomment when JobDetails page is created
+// const CourseDetails = lazy(() => import("./pages/Courses/CourseDetails")); // TODO: Uncomment when CourseDetails page is created
+// const Community = lazy(() => import("./pages/Community/Index")); // TODO: Uncomment when Community page is created
+// const ChatRoom = lazy(() => import("./pages/Community/ChatRoom")); // TODO: Uncomment when ChatRoom page is created
+// const CompetitionDetails = lazy(() => import("./pages/Competitions/CompetitionDetails")); // TODO: Uncomment when CompetitionDetails page is created
+// const Profile = lazy(() => import("./pages/Profiles/Profile")); // TODO: Uncomment when Profile page is created
 
-      <Route path="Dashboard" element={<DashBoard />} />
-      <Route path="Contact" element={<Contact />} action={contactForm} />
-      <Route path="Signup" element={<SignUp />} action={SignupForm} />
-      <Route path="CreateAds" element={<CreateAds />} />
-      <Route path="Login" element={<LogIn />} action={LoginForm} />
-      <Route path="PasswordReset1" element={<PwdReset />} />
-      <Route path="Messages" element={<Messages />} />
-      <Route path="Premium" element={<Premium />} action={premiumForm} />
-      <Route path="GoPremium" element={<GoPremium />} />
-      <Route path="PremiumRequests" element={<PremiumRequests />} />
-      <Route path="Series" element={<Series />} />
-      <Route path="ChallengePosts" element={<ChallengeListing />} />
-      <Route path="createChallenge" element={<CreateChallenge />} />
-      <Route path="/ChallengePosts/:customId" element={<PostDetails />} />
-      <Route
-        path="CreateSeries"
-        element={<SeriesForm />}
-        action={createSeriesForm}
-      />
-      <Route
-        path="CreateSinglePost"
-        element={<SinglePostForm />}
-        action={createPostForm}
-      />
-      <Route path="*" element={<ErrorPage />} />
-    </Route>
-  )
-);
+// Initialize QueryClient for data fetching
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // Cache data for 5 minutes
+      retry: 1, // Retry failed queries once
+    },
+  },
+});
 
 function App() {
   return (
+    // <AuthContextProvider> // TODO: Uncomment when AuthContext is created
     <QueryClientProvider client={queryClient}>
-      {/* Provide the query client to the entire app */}
-      <RouterProvider router={router} />
+      <BrowserRouter>
+        <div className="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
+          {/* Top Navbar */}
+          <TopNavbar />
+          {/* Main content with padding for top and bottom navbars */}
+          <main className="flex-grow pt-16 pb-16 md:pt-16 md:pb-20">
+            <Suspense
+              fallback={<div className="text-center py-10">Loading...</div>}
+            >
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/contact" element={<Contact />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/dashboard/portfolio" element={<Portfolio />} />
+                <Route path="/dashboard/settings" element={<Settings />} />
+                <Route path="/posts" element={<Posts />} />
+                <Route path="/posts/:id" element={<PostDetails />} />
+                <Route path="/jobs" element={<Jobs />} />
+                <Route path="/jobs/:id" element={<Navigate to="/jobs" />} />
+                <Route path="/courses" element={<Courses />} />
+                <Route
+                  path="/courses/:id"
+                  element={<Navigate to="/courses" />}
+                />
+                <Route path="/competitions" element={<Competitions />} />
+                <Route
+                  path="/competitions/:id"
+                  element={<Navigate to="/competitions" />}
+                />
+                <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<Signup />} />
+                {/* <Route path="/reset-password" element={<ResetPassword />} /> // TODO: Uncomment when ResetPassword page is created */}
+                {/* <Route path="/community" element={<Community />} /> // TODO: Uncomment when Community page is created */}
+                {/* <Route path="/community/chats/:id" element={<ChatRoom />} /> // TODO: Uncomment when ChatRoom page is created */}
+                {/* <Route path="/profiles/:username" element={<Profile />} /> // TODO: Uncomment when Profile page is created */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+          </main>
+          {/* Bottom Navbar */}
+          <Navbar />
+        </div>
+      </BrowserRouter>
     </QueryClientProvider>
+    // </AuthContextProvider>
   );
 }
 

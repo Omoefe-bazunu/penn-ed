@@ -1,9 +1,9 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
 
 /* src/styles/tailwind.css */
-@import 'tailwindcss/base';
-@import 'tailwindcss/components';
-@import 'tailwindcss/utilities';
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
 
 :root {
   font-family: "Poppins", sans-serif;
@@ -13,7 +13,6 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-
 
 body {
   margin: 0;
@@ -25,11 +24,39 @@ body {
   background-color: #221944;
 }
 
-.pulsate-fwd{-webkit-animation:pulsate-fwd .5s ease-in-out infinite both;animation:pulsate-fwd .5s ease-in-out infinite both}
+.pulsate-fwd {
+  -webkit-animation: pulsate-fwd 0.5s ease-in-out infinite both;
+  animation: pulsate-fwd 0.5s ease-in-out infinite both;
+}
 
-@-webkit-keyframes pulsate-fwd{0%{-webkit-transform:scale(1);transform:scale(1)}50%{-webkit-transform:scale(1.1);transform:scale(1.1)}100%{-webkit-transform:scale(1);transform:scale(1)}}@keyframes pulsate-fwd{0%{-webkit-transform:scale(1);transform:scale(1)}50%{-webkit-transform:scale(1.1);transform:scale(1.1)}100%{-webkit-transform:scale(1);transform:scale(1)}}
-
-
+@-webkit-keyframes pulsate-fwd {
+  0% {
+    -webkit-transform: scale(1);
+    transform: scale(1);
+  }
+  50% {
+    -webkit-transform: scale(1.1);
+    transform: scale(1.1);
+  }
+  100% {
+    -webkit-transform: scale(1);
+    transform: scale(1);
+  }
+}
+@keyframes pulsate-fwd {
+  0% {
+    -webkit-transform: scale(1);
+    transform: scale(1);
+  }
+  50% {
+    -webkit-transform: scale(1.1);
+    transform: scale(1.1);
+  }
+  100% {
+    -webkit-transform: scale(1);
+    transform: scale(1);
+  }
+}
 
 /* BUTTON ANIMATION */
 
@@ -51,8 +78,8 @@ body {
 }
 
 .scale-up-tr {
-	-webkit-animation: scale-up-tr 0.4s cubic-bezier(0.390, 0.575, 0.565, 1.000) both;
-	        animation: scale-up-tr 0.4s cubic-bezier(0.390, 0.575, 0.565, 1.000) both;
+  -webkit-animation: scale-up-tr 0.4s cubic-bezier(0.39, 0.575, 0.565, 1) both;
+  animation: scale-up-tr 0.4s cubic-bezier(0.39, 0.575, 0.565, 1) both;
 }
 
 .menu-link li:hover {
@@ -60,32 +87,32 @@ body {
   color: rgb(238, 255, 15);
 }
 
- @-webkit-keyframes scale-up-tr {
+@-webkit-keyframes scale-up-tr {
   0% {
     -webkit-transform: scale(0.5);
-            transform: scale(0.5);
+    transform: scale(0.5);
     -webkit-transform-origin: 100% 0%;
-            transform-origin: 100% 0%;
+    transform-origin: 100% 0%;
   }
   100% {
     -webkit-transform: scale(1);
-            transform: scale(1);
+    transform: scale(1);
     -webkit-transform-origin: 100% 0%;
-            transform-origin: 100% 0%;
+    transform-origin: 100% 0%;
   }
 }
 @keyframes scale-up-tr {
   0% {
     -webkit-transform: scale(0.5);
-            transform: scale(0.5);
+    transform: scale(0.5);
     -webkit-transform-origin: 100% 0%;
-            transform-origin: 100% 0%;
+    transform-origin: 100% 0%;
   }
   100% {
     -webkit-transform: scale(1);
-            transform: scale(1);
+    transform: scale(1);
     -webkit-transform-origin: 100% 0%;
-            transform-origin: 100% 0%;
+    transform-origin: 100% 0%;
   }
 }
 
@@ -94,13 +121,13 @@ body {
   height: 30rem;
 }
 
-.SignUp-Wrapper .SignUpInner .Form .brand, 
-.SignUp-Wrapper .SignUpInner .Form .FormElement input{
-  color:#221944;
+.SignUp-Wrapper .SignUpInner .Form .brand,
+.SignUp-Wrapper .SignUpInner .Form .FormElement input {
+  color: #221944;
 }
 
-.SignUp-Wrapper .SignUpInner .Form .FormElement button{
-  background-color:#221944;
+.SignUp-Wrapper .SignUpInner .Form .FormElement button {
+  background-color: #221944;
 }
 
 /* Login Page */
@@ -108,15 +135,14 @@ body {
   height: 30rem;
 }
 
-
 .LogIn-Wrapper .LogInInner .Form .brand,
 .LogIn-Wrapper .LogInInner .Form .FormElement .signup,
-.LogIn-Wrapper .LogInInner .Form .FormElement input{
-  color:#221944;
+.LogIn-Wrapper .LogInInner .Form .FormElement input {
+  color: #221944;
 }
 
-.LogIn-Wrapper .LogInInner .Form .FormElement button{
-  background-color:#221944;
+.LogIn-Wrapper .LogInInner .Form .FormElement button {
+  background-color: #221944;
 }
 
 /* PasswordReset Page */
@@ -126,7 +152,6 @@ body {
   height: 30rem;
 }
 
-
 .PwdRT1-Wrapper .PwdRT1Inner .Form .brand,
 .PwdRT1-Wrapper .PwdRT1Inner .Form .FormElement .signup,
 .PwdRT1-Wrapper .PwdRT1Inner .Form .FormElement input,
@@ -135,21 +160,21 @@ body {
 .PwdRT2-Wrapper .PwdRT1Inner .Form .FormElement input,
 .PwdRT3-Wrapper .PwdRT3Inner .Form .brand,
 .PwdRT3-Wrapper .PwdRT3Inner .Form .FormElement .signup,
-.PwdRT3-Wrapper .PwdRT3Inner .Form .FormElement input{
-  color:#221944;
+.PwdRT3-Wrapper .PwdRT3Inner .Form .FormElement input {
+  color: #221944;
 }
 
 .PwdRT1-Wrapper .PwdRT1Inner .Form .FormElement button,
 .PwdRT2-Wrapper .PwdRT2Inner .Form .FormElement button,
-.PwdRT3-Wrapper .PwdRT3Inner .Form .FormElement button{
-  background-color:#221944;
+.PwdRT3-Wrapper .PwdRT3Inner .Form .FormElement button {
+  background-color: #221944;
 }
 
 /* NavBar */
 .NavBar .NavLinks .LoginBtn,
-.NavBar .NavLinks .LogoutBtn,  
-.Bar .menu-link .Login, 
-.Bar .menu-link .Logout  {
+.NavBar .NavLinks .LogoutBtn,
+.Bar .menu-link .Login,
+.Bar .menu-link .Logout {
   background-color: #bb4222;
 }
 
@@ -159,24 +184,23 @@ body {
 
 /* BreadCrumbs */
 
-.breadcrumbs > *  {
+.breadcrumbs > * {
   display: inline-block;
-  }
-  
-.breadcrumbs  .crumb:after{
-  Content: '|';
+}
+
+.breadcrumbs .crumb:after {
+  content: "|";
   margin: 10px;
   color: white;
-  }
-  
-.breadcrumbs  .crumb:last-child:after {
-  display:none;
-  }
-  
-.breadcrumbs  .crumb a {
+}
+
+.breadcrumbs .crumb:last-child:after {
+  display: none;
+}
+
+.breadcrumbs .crumb a {
   color: white;
-  } 
-  
+}
 
 /* Footer */
 
@@ -208,42 +232,41 @@ body {
   height: 30rem;
 }
 
-
 .Contact-Wrapper .ContactInner .Form .header,
-.Contact-Wrapper .ContactInner .Form .FormElement input{
-  color:#221944;
+.Contact-Wrapper .ContactInner .Form .FormElement input {
+  color: #221944;
 }
 
-.Contact-Wrapper .ContactInner .Form .FormElement button{
-  background-color:#221944;
+.Contact-Wrapper .ContactInner .Form .FormElement button {
+  background-color: #221944;
 }
 
 /* Blogs */
 
-.BlogsWrapper .posts, .BlogsWrapper .header,  
+.BlogsWrapper .posts,
+.BlogsWrapper .header,
 .DashboardWrapper .postwrapper .posts,
 .MessagesWrapper .messages,
-.MessagesWrapper .header{
-  background-color:#1b1531;
+.MessagesWrapper .header {
+  background-color: #1b1531;
 }
 
 .BlogsWrapper .post-inner .posts .postBody {
   line-height: 18px;
 }
 
-
 /* BlogDetails */
 
 .BlogDetailsWrapper .postwrapper .post,
 .BlogDetailsWrapper .postwrapper .commentbox {
-  background-color:#1b1531;
+  background-color: #1b1531;
 }
 
 .BlogDetailsWrapper .postwrapper .post .reactions {
   background-color: #bb4222;
 }
 
-.BlogDetailsWrapper .postwrapper .post .reactions .Reaction{
+.BlogDetailsWrapper .postwrapper .post .reactions .Reaction {
   transition: scale 0.5;
 }
 
@@ -251,26 +274,23 @@ body {
   scale: 0.8;
 }
 
-
-.BlogDetailsWrapper .postwrapper .commentbox .commentForm button{
+.BlogDetailsWrapper .postwrapper .commentbox .commentForm button {
   background-color: #bb4222;
 }
-
 
 /* Dashboard */
 
 .DashboardWrapper .postwrapper .post,
 .DashboardWrapper .postwrapper .createPost {
-  background-color:#1b1531;
+  background-color: #1b1531;
 }
 
-.DashboardWrapper .postwrapper .postForm .Btn{
+.DashboardWrapper .postwrapper .postForm .Btn {
   background-color: #bb4222;
 }
 
 /* RESPONSIVENESS */
 @media only screen and (max-width: 650px) {
-
   .NavLinks {
     display: none;
   }
@@ -279,22 +299,28 @@ body {
     display: flex;
   }
 
-   /* BreadCrumbs */
-   .breadcrumbs {
+  /* BreadCrumbs */
+  .breadcrumbs {
     text-align: center;
   }
 
   /* Blogs */
 
-  .BlogsWrapper, .AboutWrapper, .DashboardWrapper,
+  .BlogsWrapper,
+  .AboutWrapper,
+  .DashboardWrapper,
   .Contact-Wrapper .ContactInner,
   .SignUp-Wrapper .SignUpInner,
-  .LogIn-Wrapper .LogInInner, 
-  .PwdRT1-Wrapper .PwdRT1Inner, .PwdRT2-Wrapper .PwdRT2Inner, .PwdRT3-Wrapper .PwdRT3Inner {
+  .LogIn-Wrapper .LogInInner,
+  .PwdRT1-Wrapper .PwdRT1Inner,
+  .PwdRT2-Wrapper .PwdRT2Inner,
+  .PwdRT3-Wrapper .PwdRT3Inner {
     flex-direction: column;
   }
 
-  .BlogsWrapper .sideBar, .DashboardWrapper .sideBar, .BlogDetailsWrapper .sideBar {
+  .BlogsWrapper .sideBar,
+  .DashboardWrapper .sideBar,
+  .BlogDetailsWrapper .sideBar {
     width: 100%;
   }
 
@@ -315,21 +341,22 @@ body {
   /* Dashboard */
 
   /* Contact */
-  .Contact-Wrapper .ContactInner, 
+  .Contact-Wrapper .ContactInner,
   .SignUp-Wrapper .SignUpInner,
   .LogIn-Wrapper .LogInInner,
-  .PwdRT1-Wrapper .PwdRT1Inner, .PwdRT2-Wrapper .PwdRT2Inner, 
-  .PwdRT3-Wrapper .PwdRT3Inner{
+  .PwdRT1-Wrapper .PwdRT1Inner,
+  .PwdRT2-Wrapper .PwdRT2Inner,
+  .PwdRT3-Wrapper .PwdRT3Inner {
     height: 100vh;
   }
 
-  .Contact-Wrapper .ContactInner .FormElement, 
+  .Contact-Wrapper .ContactInner .FormElement,
   .LogIn-Wrapper .LogInInner .FormElement,
   .PwdRT1-Wrapper .PwdRT1Inner .FormElement,
   .PwdRT2-Wrapper .PwdRT2Inner .FormElement,
   .PwdRT3-Wrapper .PwdRT3Inner .FormElement,
-  .SignUp-Wrapper .SignUpInner .FormElement{
-   padding: 2px 4px;
+  .SignUp-Wrapper .SignUpInner .FormElement {
+    padding: 2px 4px;
   }
 
   .BlogDetailsWrapper {
