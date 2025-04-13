@@ -106,31 +106,24 @@ const navLinks = [
 ];
 
 function Navbar() {
-  const location = useLocation(); // Track current route for active tab
+  const location = useLocation();
 
   return (
     <nav className="bg-white shadow-sm fixed bottom-0 left-0 right-0 z-10 border-t border-slate-200">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="flex justify-between">
-          {/* Spacer to push tabs to the right */}
-          <div className="flex-grow"></div>
-          {/* Right-aligned bottom tabs */}
-          <div className="flex">
-            {navLinks.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                className={`flex flex-col items-center px-3 py-2 text-xs font-inter text-slate-600 hover:text-teal-600 transition-colors ${
-                  location.pathname === link.to
-                    ? "text-teal-700 bg-teal-100"
-                    : ""
-                }`}
-              >
-                <span className="mb-1">{link.icon}</span>
-                <span>{link.label}</span>
-              </Link>
-            ))}
-          </div>
+      <div className="w-full mx-auto px-4">
+        <div className="flex justify-center">
+          {navLinks.map((link) => (
+            <Link
+              key={link.to}
+              to={link.to}
+              className={`flex flex-col items-center px-3 py-2 text-xs font-inter text-slate-600 hover:text-teal-600 transition-colors ${
+                location.pathname === link.to ? "text-teal-700 bg-teal-100" : ""
+              }`}
+            >
+              <span className="mb-1">{link.icon}</span>
+              <span>{link.label}</span>
+            </Link>
+          ))}
         </div>
       </div>
     </nav>

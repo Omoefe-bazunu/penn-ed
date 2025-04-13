@@ -1,36 +1,39 @@
 // src/pages/Auth/Login.jsx
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../../firebase";
 
 function Login() {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Dummy submission logic
-    console.log("Login Data:", formData);
-    alert("Login submitted (dummy)");
+    setError("");
+    try {
+      await signInWithEmailAndPassword(auth, formData.email, formData.password);
+      navigate("/dashboard");
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   return (
     <div className="max-w-md mx-auto px-4 py-8">
-      {/* Header */}
-      <h1 className="text-3xl font-bold font-poppins text-slate-800 mb-6 text-center">
-        Log In
+      <h1 className="text-3xl font-bold font-poppins text-slate-800 mb-6">
+        Login
       </h1>
-
-      {/* Login Form */}
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white p-6 rounded-lg shadow-md"
-      >
+      {error && <p className="text-red-500 font-inter mb-4">{error}</p>}
+      <form onSubmit={handleSubmit}>
         <div className="mb-4">
           <label
             htmlFor="email"
@@ -48,7 +51,7 @@ function Login() {
             required
           />
         </div>
-        <div className="mb-6">
+        <div className="mb-4">
           <label
             htmlFor="password"
             className="block text-sm font-inter text-slate-600 mb-1"
@@ -69,23 +72,13 @@ function Login() {
           type="submit"
           className="w-full bg-teal-600 text-white font-inter font-semibold py-2 px-4 rounded-lg hover:bg-teal-500 transition-colors"
         >
-          Log In
+          Login
         </button>
       </form>
-
-      {/* Signup Link */}
-      <p className="mt-4 text-center text-slate-600 font-inter">
+      <p className="text-slate-600 font-inter mt-4">
         Don’t have an account?{" "}
         <Link to="/signup" className="text-teal-600 hover:underline">
           Sign Up
-        </Link>
-      </p>
-
-      {/* Reset Password Link */}
-      <p className="mt-2 text-center text-slate-600 font-inter">
-        Forgot password?{" "}
-        <Link to="/reset-password" className="text-teal-600 hover:underline">
-          Reset Password
         </Link>
       </p>
     </div>

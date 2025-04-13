@@ -1,26 +1,84 @@
-// src/components/forms/CreateCourseForm.jsx
 import { useState } from "react";
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { dbase, storage } from "../../firebase";
+import { useAuth } from "../../context/AuthContext";
 
 function CreateCourseForm({ isOpen, onClose }) {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    image: "",
     externalLink: "",
   });
+  const [file, setFile] = useState(null);
+  const [preview, setPreview] = useState(null);
+  const [error, setError] = useState("");
+  const { user } = useAuth();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleFileChange = (e) => {
+    const selectedFile = e.target.files[0];
+    if (selectedFile) {
+      const validTypes = ["image/png", "image/jpeg"];
+      if (!validTypes.includes(selectedFile.type)) {
+        setError("Please upload a PNG or JPEG image.");
+        setFile(null);
+        setPreview(null);
+        return;
+      }
+      if (selectedFile.size > 5 * 1024 * 1024) {
+        setError("Image size must be less than 5MB.");
+        setFile(null);
+        setPreview(null);
+        return;
+      }
+      setError("");
+      setFile(selectedFile);
+      setPreview(URL.createObjectURL(selectedFile));
+    }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Dummy submission
-    console.log("Create Course Data:", formData);
-    alert("Course added (dummy)");
-    // Reset form
-    setFormData({ title: "", description: "", image: "", externalLink: "" });
-    onClose();
+    if (!user) {
+      setError("Please log in to add a course.");
+      return;
+    }
+    if (!file) {
+      setError("Please upload a featured image.");
+      return;
+    }
+    try {
+      // Upload image
+      const docRef = await addDoc(collection(dbase, "courses"), {}); // Create doc to get ID
+      const storageRef = ref(
+        storage,
+        `images/courses/${docRef.id}/${file.name}`
+      );
+      await uploadBytes(storageRef, file);
+      const imageUrl = await getDownloadURL(storageRef);
+
+      // Save course
+      await updateDoc(docRef, {
+        title: formData.title,
+        description: formData.description,
+        externalLink: formData.externalLink,
+        image: imageUrl,
+        datePosted: serverTimestamp(),
+        createdBy: user.uid,
+      });
+
+      alert("Course added successfully!");
+      setFormData({ title: "", description: "", externalLink: "" });
+      setFile(null);
+      setPreview(null);
+      onClose();
+    } catch (err) {
+      setError("Failed to add course: " + err.message);
+    }
   };
 
   if (!isOpen) return null;
@@ -28,7 +86,6 @@ function CreateCourseForm({ isOpen, onClose }) {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-md max-w-lg w-full mx-4 p-6 max-h-[90vh] overflow-y-auto">
-        {/* Modal Header */}
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold font-poppins text-slate-800">
             Add New Course
@@ -53,8 +110,6 @@ function CreateCourseForm({ isOpen, onClose }) {
             </svg>
           </button>
         </div>
-
-        {/* Form */}
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label
@@ -86,33 +141,16 @@ function CreateCourseForm({ isOpen, onClose }) {
               value={formData.description}
               onChange={handleChange}
               className="w-full p-2 border border-slate-300 rounded-md font-inter text-slate-800"
-              rows="6"
+              rows="4"
               required
             ></textarea>
-          </div>
-          <div className="mb-4">
-            <label
-              htmlFor="image"
-              className="block text-sm font-inter text-slate-600 mb-1"
-            >
-              Featured Image URL (Optional)
-            </label>
-            <input
-              type="url"
-              id="image"
-              name="image"
-              value={formData.image}
-              onChange={handleChange}
-              className="w-full p-2 border border-slate-300 rounded-md font-inter text-slate-800"
-              placeholder="https://example.com/image.jpg"
-            />
           </div>
           <div className="mb-4">
             <label
               htmlFor="externalLink"
               className="block text-sm font-inter text-slate-600 mb-1"
             >
-              External Link (Optional)
+              External Link
             </label>
             <input
               type="url"
@@ -121,9 +159,32 @@ function CreateCourseForm({ isOpen, onClose }) {
               value={formData.externalLink}
               onChange={handleChange}
               className="w-full p-2 border border-slate-300 rounded-md font-inter text-slate-800"
-              placeholder="https://example.com/enroll"
             />
           </div>
+          <div className="mb-4">
+            <label
+              htmlFor="image"
+              className="block text-sm font-inter text-slate-600 mb-1"
+            >
+              Featured Image
+            </label>
+            <input
+              type="file"
+              id="image"
+              accept="image/png,image/jpeg"
+              onChange={handleFileChange}
+              className="w-full p-2 border border-slate-300 rounded-md font-inter text-slate-800"
+              required
+            />
+            {preview && (
+              <img
+                src={preview}
+                alt="Preview"
+                className="mt-2 w-32 h-32 object-cover rounded-md"
+              />
+            )}
+          </div>
+          {error && <p className="text-red-500 font-inter mb-4">{error}</p>}
           <div className="flex justify-end space-x-4">
             <button
               type="button"

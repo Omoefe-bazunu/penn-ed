@@ -1,132 +1,167 @@
-// src/pages/Dashboard/Index.jsx
 import { useState } from "react";
+import { useAuth } from "../../context/AuthContext";
+import { doc, updateDoc } from "firebase/firestore";
+import { dbase } from "../../firebase";
 import { Link } from "react-router-dom";
-import Card from "../../components/ui/card";
+import SubscriptionModal from "../../components/subscriptionModal";
 import CreatePostForm from "../../components/forms/CreatePostForm";
-
-// Dummy data for dashboard
-const dummyStats = [
-  { label: "Total Posts", value: 12 },
-  { label: "Portfolio Views", value: 245 },
-  { label: "Community Interactions", value: 87 },
-];
-
-const dummyPosts = [
-  {
-    id: "1",
-    title: "My Latest Story",
-    excerpt: "A thrilling tale of adventure and discovery.",
-    author: "You",
-    date: "April 10, 2025",
-    image: "https://via.placeholder.com/400x200?text=Story",
-  },
-  {
-    id: "2",
-    title: "Poetry Collection",
-    excerpt: "Exploring emotions through verse.",
-    author: "You",
-    date: "April 8, 2025",
-    image: "https://via.placeholder.com/400x200?text=Poetry",
-  },
-];
-
-// Dummy auth state (replace with Firebase later)
-const isLoggedIn = true; // Simulate logged-in user
+import { useNavigate } from "react-router-dom";
 
 function Dashboard() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const { user, userData, loading } = useAuth();
+  const [isSubscriptionOpen, setIsSubscriptionOpen] = useState(false);
+  const [isPostFormOpen, setIsPostFormOpen] = useState(false);
+  const Navigate = useNavigate();
 
-  const openModal = () => setIsModalOpen(true);
-  const closeModal = () => setIsModalOpen(false);
+  const openSubscriptionModal = () => setIsSubscriptionOpen(true);
+  const closeSubscriptionModal = () => setIsSubscriptionOpen(false);
+  const openPostForm = () => setIsPostFormOpen(true);
+  const closePostForm = () => setIsPostFormOpen(false);
+
+  const handleCancelSubscription = async () => {
+    if (!user) return;
+    try {
+      await updateDoc(doc(dbase, "users", user.uid), {
+        subscribed: false,
+        subscriptionDate: null,
+      });
+      alert("Subscription cancelled.");
+    } catch (err) {
+      alert("Error cancelling subscription: " + err.message);
+    }
+  };
+
+  if (loading) return <div className="text-center py-10">Loading...</div>;
+  if (!user) {
+    Navigate("/");
+  }
+
+  const getSubscriptionStatus = () => {
+    if (userData?.pendingReceipt) return "Pending Approval";
+    if (userData?.subscribed) return "Active";
+    return "Not Subscribed";
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
-      {/* Header */}
       <h1 className="text-3xl font-bold font-poppins text-slate-800 mb-6">
-        Your Dashboard
+        Dashboard
       </h1>
+      {user ? (
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h2 className="text-lg font-semibold font-poppins text-slate-800 mb-4">
+            Welcome, {user?.email || "User"}
+          </h2>
 
-      {/* Create Post Button (User Only) */}
-      {isLoggedIn && (
-        <div className="mb-8">
-          <button
-            onClick={openModal}
-            className="inline-block bg-teal-600 text-white font-inter font-semibold py-2 px-4 rounded-lg hover:bg-teal-500 transition-colors"
-          >
-            Create New Post
-          </button>
-        </div>
-      )}
-
-      {/* Create Post Modal */}
-      <CreatePostForm isOpen={isModalOpen} onClose={closeModal} />
-
-      {/* Stats Section */}
-      <section className="mb-8">
-        <h2 className="text-xl font-semibold font-poppins text-slate-800 mb-4">
-          Overview
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {dummyStats.map((stat) => (
-            <div
-              key={stat.label}
-              className="bg-white p-4 rounded-lg shadow-md text-center"
-            >
-              <p className="text-2xl font-bold text-teal-600 font-inter">
-                {stat.value}
+          <div className="mb-4">
+            <p className="text-slate-600 font-inter">
+              Subscription Status:{" "}
+              <span
+                className={
+                  userData?.subscribed
+                    ? "text-teal-600"
+                    : userData?.pendingReceipt
+                    ? "text-yellow-500"
+                    : "text-red-500"
+                }
+              >
+                {getSubscriptionStatus()}
+              </span>
+            </p>
+            {!userData?.subscribed && !userData?.pendingReceipt && (
+              <>
+                <button
+                  onClick={openSubscriptionModal}
+                  className="mt-2 bg-teal-600 text-white font-inter font-semibold py-2 px-4 rounded-lg hover:bg-teal-500 transition-colors"
+                >
+                  Subscribe
+                </button>
+                <p className="text-slate-600 font-inter text-sm mt-2">
+                  Subscribe to access exclusive courses and participate in
+                  writing competitions.
+                </p>
+              </>
+            )}
+            {userData?.subscribed && (
+              <button
+                onClick={handleCancelSubscription}
+                className="mt-2 bg-red-600 text-white font-inter font-semibold py-2 px-4 rounded-lg hover:bg-red-500 transition-colors"
+              >
+                Cancel Subscription
+              </button>
+            )}
+            {userData?.pendingReceipt && (
+              <p className="text-slate-600 font-inter text-sm mt-2">
+                Your receipt is under review. You’ll be notified once approved.
               </p>
-              <p className="text-sm text-slate-600 font-inter">{stat.label}</p>
+            )}
+          </div>
+          <div className="mt-6">
+            <h3 className="text-lg font-semibold font-poppins text-slate-800 mb-4">
+              Your Dashboard
+            </h3>
+            <p className="text-slate-600 font-inter mb-4">
+              Manage your content and explore platform features:
+            </p>
+            <div className="mb-6">
+              <button
+                onClick={openPostForm}
+                className="bg-teal-600 text-white font-inter font-semibold py-2 px-4 rounded-lg hover:bg-teal-500 transition-colors"
+              >
+                Create Post
+              </button>
             </div>
-          ))}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <Link
+                to="/dashboard/portfolio"
+                className="bg-slate-100 rounded-lg shadow-md p-4 hover:bg-slate-200 transition-colors"
+              >
+                <h4 className="text-teal-600 font-poppins font-semibold text-lg">
+                  View Portfolio
+                </h4>
+                <p className="text-slate-600 font-inter text-sm">
+                  See your posts and series.
+                </p>
+              </Link>
+              <Link
+                to="/dashboard/settings"
+                className="bg-slate-100 rounded-lg shadow-md p-4 hover:bg-slate-200 transition-colors"
+              >
+                <h4 className="text-teal-600 font-poppins font-semibold text-lg">
+                  Account Settings
+                </h4>
+                <p className="text-slate-600 font-inter text-sm">
+                  Update your profile information.
+                </p>
+              </Link>
+              <Link
+                to="/posts"
+                className="bg-slate-100 rounded-lg shadow-md p-4 hover:bg-slate-200 transition-colors"
+              >
+                <h4 className="text-teal-600 font-poppins font-semibold text-lg">
+                  Manage Posts
+                </h4>
+                <p className="text-slate-600 font-inter text-sm">
+                  Edit or delete your posts.
+                </p>
+              </Link>
+            </div>
+          </div>
         </div>
-      </section>
-
-      {/* Recent Posts Section */}
-      <section className="mb-8">
-        <h2 className="text-xl font-semibold font-poppins text-slate-800 mb-4">
-          Recent Posts
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {dummyPosts.map((post) => (
-            <Card
-              key={post.id}
-              title={post.title}
-              excerpt={post.excerpt}
-              author={post.author}
-              date={post.date}
-              image={post.image}
-              link={`/posts/${post.id}`}
-            />
-          ))}
-        </div>
-        <Link
-          to="/posts"
-          className="block text-teal-600 font-inter font-semibold hover:underline mt-4"
-        >
-          View All Posts
-        </Link>
-      </section>
-
-      {/* Quick Links Section */}
-      <section>
-        <h2 className="text-xl font-semibold font-poppins text-slate-800 mb-4">
-          Quick Links
-        </h2>
-        <div className="flex space-x-4">
-          <Link
-            to="/dashboard/portfolio"
-            className="bg-teal-600 text-white font-inter font-semibold py-2 px-4 rounded-lg hover:bg-teal-500 transition-colors"
-          >
-            Manage Portfolio
-          </Link>
-          <Link
-            to="/dashboard/settings"
-            className="bg-slate-600 text-white font-inter font-semibold py-2 px-4 rounded-lg hover:bg-slate-500 transition-colors"
-          >
-            Account Settings
-          </Link>
-        </div>
-      </section>
+      ) : (
+        <p className="text-slate-600 font-inter">
+          Please{" "}
+          <Link to="/login" className="text-teal-600 hover:underline">
+            log in
+          </Link>{" "}
+          to view your dashboard.
+        </p>
+      )}
+      <SubscriptionModal
+        isOpen={isSubscriptionOpen}
+        onClose={closeSubscriptionModal}
+      />
+      <CreatePostForm isOpen={isPostFormOpen} onClose={closePostForm} />
     </div>
   );
 }

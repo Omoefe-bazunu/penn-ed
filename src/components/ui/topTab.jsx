@@ -1,8 +1,5 @@
-// src/components/ui/TopNavbar.jsx
 import { Link, useLocation } from "react-router-dom";
-
-// Dummy auth state (replace with Firebase later)
-const isLoggedIn = true; // Simulate logged-in user
+import { useAuth } from "../../context/AuthContext";
 
 // Top navigation links with SVG icons
 const topNavLinks = [
@@ -76,11 +73,16 @@ const topNavLinks = [
 
 function TopNavbar() {
   const location = useLocation();
+  const { user, logout } = useAuth();
 
-  // Dummy logout function (replace with Firebase logout)
-  const handleLogout = () => {
-    console.log("Logged out (dummy)");
-    alert("Logged out (dummy)");
+  const handleLogout = async () => {
+    try {
+      await logout();
+      alert("Logged out successfully");
+    } catch (err) {
+      console.error("Logout failed:", err);
+      alert("Failed to log out: " + err.message);
+    }
   };
 
   return (
@@ -112,7 +114,7 @@ function TopNavbar() {
             </Link>
           ))}
           {/* Auth Link */}
-          {isLoggedIn ? (
+          {user ? (
             <button
               onClick={handleLogout}
               className="flex items-center px-2 py-1 text-sm font-inter text-slate-600 hover:text-teal-600 transition-colors"

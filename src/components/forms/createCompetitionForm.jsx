@@ -1,21 +1,20 @@
-// src/components/forms/CreateJobForm.jsx
+// src/components/forms/CreateCompetitionForm.jsx
 import { useState } from "react";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { dbase, storage } from "../../firebase";
 import { useAuth } from "../../context/AuthContext";
 
-function CreateJobForm({ isOpen, onClose }) {
+function CreateCompetitionForm({ isOpen, onClose }) {
   const [formData, setFormData] = useState({
     title: "",
-    company: "",
     description: "",
     externalLink: "",
   });
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [error, setError] = useState("");
-  const { user } = useAuth();
+  const { user, userData } = useAuth();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -40,30 +39,45 @@ function CreateJobForm({ isOpen, onClose }) {
       setError("");
       setFile(selectedFile);
       setPreview(URL.createObjectURL(selectedFile));
+    } else {
+      setFile(null);
+      setPreview(null);
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!user) {
-      setError("Please log in to add a job.");
+      setError("Please log in to add a competition.");
       return;
     }
-    if (!file) {
-      setError("Please upload a featured image.");
+    if (userData?.email !== "admin@example.com") {
+      // Replace with your admin email
+      setError("Only admins can add competitions.");
+      return;
+    }
+    if (!formData.title || !formData.description) {
+      setError("Title and description are required.");
       return;
     }
     try {
-      // Upload image
-      const docRef = await addDoc(collection(dbase, "jobs"), {});
-      const storageRef = ref(storage, `images/jobs/${docRef.id}/${file.name}`);
-      await uploadBytes(storageRef, file);
-      const imageUrl = await getDownloadURL(storageRef);
+      // Create doc
+      const docRef = await addDoc(collection(dbase, "competitions"), {});
+      let imageUrl = null;
 
-      // Save job
+      // Upload image if provided
+      if (file) {
+        const storageRef = ref(
+          storage,
+          `images/competitions/${docRef.id}/${file.name}`
+        );
+        await uploadBytes(storageRef, file);
+        imageUrl = await getDownloadURL(storageRef);
+      }
+
+      // Save competition
       await updateDoc(docRef, {
         title: formData.title,
-        company: formData.company,
         description: formData.description,
         externalLink: formData.externalLink,
         image: imageUrl,
@@ -71,18 +85,13 @@ function CreateJobForm({ isOpen, onClose }) {
         createdBy: user.uid,
       });
 
-      alert("Job added successfully!");
-      setFormData({
-        title: "",
-        company: "",
-        description: "",
-        externalLink: "",
-      });
+      alert("Competition added successfully!");
+      setFormData({ title: "", description: "", externalLink: "" });
       setFile(null);
       setPreview(null);
       onClose();
     } catch (err) {
-      setError("Failed to add job: " + err.message);
+      setError("Failed to add competition: " + err.message);
     }
   };
 
@@ -93,7 +102,7 @@ function CreateJobForm({ isOpen, onClose }) {
       <div className="bg-white rounded-lg shadow-md max-w-lg w-full mx-4 p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold font-poppins text-slate-800">
-            Add New Job
+            Add New Competition
           </h2>
           <button
             onClick={onClose}
@@ -121,30 +130,13 @@ function CreateJobForm({ isOpen, onClose }) {
               htmlFor="title"
               className="block text-sm font-inter text-slate-600 mb-1"
             >
-              Job Title
+              Competition Title
             </label>
             <input
               type="text"
               id="title"
               name="title"
               value={formData.title}
-              onChange={handleChange}
-              className="w-full p-2 border border-slate-300 rounded-md font-inter text-slate-800"
-              required
-            />
-          </div>
-          <div className="mb-4">
-            <label
-              htmlFor="company"
-              className="block text-sm font-inter text-slate-600 mb-1"
-            >
-              Company
-            </label>
-            <input
-              type="text"
-              id="company"
-              name="company"
-              value={formData.company}
               onChange={handleChange}
               className="w-full p-2 border border-slate-300 rounded-md font-inter text-slate-800"
               required
@@ -188,7 +180,7 @@ function CreateJobForm({ isOpen, onClose }) {
               htmlFor="image"
               className="block text-sm font-inter text-slate-600 mb-1"
             >
-              Featured Image
+              Featured Image (Optional)
             </label>
             <input
               type="file"
@@ -196,7 +188,6 @@ function CreateJobForm({ isOpen, onClose }) {
               accept="image/png,image/jpeg"
               onChange={handleFileChange}
               className="w-full p-2 border border-slate-300 rounded-md font-inter text-slate-800"
-              required
             />
             {preview && (
               <img
@@ -219,7 +210,7 @@ function CreateJobForm({ isOpen, onClose }) {
               type="submit"
               className="bg-teal-600 text-white font-inter font-semibold py-2 px-4 rounded-lg hover:bg-teal-500 transition-colors"
             >
-              Add Job
+              Add Competition
             </button>
           </div>
         </form>
@@ -228,4 +219,4 @@ function CreateJobForm({ isOpen, onClose }) {
   );
 }
 
-export default CreateJobForm;
+export default CreateCompetitionForm;

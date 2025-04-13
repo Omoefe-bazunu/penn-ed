@@ -1,96 +1,33 @@
 // src/pages/Competitions/Index.jsx
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { collection, getDocs } from "firebase/firestore";
+import { dbase } from "../../Firebase";
+import { useAuth } from "../../context/AuthContext";
+import { Link } from "react-router-dom";
 import CompetitionApplicationModal from "../../components/CompetitionApplicationModal";
-
-// Dummy competition data
-const dummyCompetitions = [
-  {
-    id: "1",
-    title: "Short Story Challenge 2025",
-    datePosted: "April 12, 2025",
-    description:
-      "Write a captivating short story under 2,000 words. Open to all genres, judged on creativity and impact.",
-    image: "https://via.placeholder.com/400x200?text=Short+Story",
-    status: "ongoing",
-    entryRequirements:
-      "Submit a story of 1,000-2,000 words. PDF format, unpublished work only. Entry fee: $10.",
-    externalLink: "https://example.com/competitions/short-story",
-  },
-  {
-    id: "2",
-    title: "Poetry Slam Spring",
-    datePosted: "April 10, 2025",
-    description:
-      "Compose a poem on the theme 'Hope.' Perform or submit written work for a chance to shine.",
-    image: "https://via.placeholder.com/400x200?text=Poetry+Slam",
-    status: "ongoing",
-    entryRequirements:
-      "One poem, max 3 minutes if performed, or 500 words if written. Free entry.",
-  },
-  {
-    id: "3",
-    title: "Essay Writing Contest",
-    datePosted: "April 8, 2025",
-    description:
-      "Craft a thought-provoking essay on 'The Future of Storytelling.' Top entries published.",
-    image: "https://via.placeholder.com/400x200?text=Essay+Contest",
-    status: "ongoing",
-    entryRequirements:
-      "Essay of 1,500-3,000 words. Open to all, no fee. Submit by May 15, 2025.",
-    externalLink: "https://example.com/competitions/essay",
-  },
-  {
-    id: "4",
-    title: "Flash Fiction Fest 2024",
-    datePosted: "October 15, 2024",
-    description:
-      "Write a complete story in 500 words or less. Past winners amazed us with their brevity.",
-    image: "https://via.placeholder.com/400x200?text=Flash+Fiction",
-    status: "past",
-    winners: [
-      {
-        name: "Jane Doe",
-        image: "https://via.placeholder.com/80?text=Jane",
-      },
-      {
-        name: "John Smith",
-        image: "https://via.placeholder.com/80?text=John",
-      },
-      {
-        name: "Emma Brown",
-        image: "https://via.placeholder.com/80?text=Emma",
-      },
-    ],
-  },
-  {
-    id: "5",
-    title: "Novel Opening Competition 2024",
-    datePosted: "September 1, 2024",
-    description:
-      "Submit the first 5,000 words of your novel. Our judges loved the diversity of entries.",
-    image: "https://via.placeholder.com/400x200?text=Novel+Opening",
-    status: "past",
-    winners: [
-      {
-        name: "Alex Carter",
-        image: "https://via.placeholder.com/80?text=Alex",
-      },
-      {
-        name: "Sarah Lee",
-        image: "https://via.placeholder.com/80?text=Sarah",
-      },
-      {
-        name: "Michael Chen",
-        image: "https://via.placeholder.com/80?text=Michael",
-      },
-    ],
-  },
-];
+import SubscriptionModal from "../../components/subscriptionModal";
 
 function Competitions() {
   const [activeTab, setActiveTab] = useState("ongoing");
   const [isApplicationOpen, setIsApplicationOpen] = useState(false);
+  const [isSubscriptionOpen, setIsSubscriptionOpen] = useState(false);
   const [selectedCompetition, setSelectedCompetition] = useState(null);
+  const { user, userData, loading: authLoading } = useAuth();
+
+  const fetchCompetitions = async () => {
+    const querySnapshot = await getDocs(collection(dbase, "competitions"));
+    return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+  };
+
+  const {
+    data: competitions,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["competitions"],
+    queryFn: fetchCompetitions,
+  });
 
   const openApplicationModal = (competition) => {
     setSelectedCompetition(competition);
@@ -102,18 +39,25 @@ function Competitions() {
     setSelectedCompetition(null);
   };
 
-  const filteredCompetitions = dummyCompetitions.filter(
-    (comp) => comp.status === activeTab
-  );
+  const openSubscriptionModal = () => setIsSubscriptionOpen(true);
+  const closeSubscriptionModal = () => setIsSubscriptionOpen(false);
+
+  const filteredCompetitions = competitions
+    ? competitions.filter((comp) => comp.status === activeTab)
+    : [];
+
+  if (isLoading || authLoading)
+    return <div className="text-center py-10">Loading...</div>;
+  if (error)
+    return (
+      <div className="text-center py-10 text-red-500">{error.message}</div>
+    );
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
-      {/* Header */}
       <h1 className="text-3xl font-bold font-poppins text-slate-800 mb-6">
         Writing Competitions
       </h1>
-
-      {/* Toggle Tabs */}
       <div className="flex space-x-4 mb-6">
         <button
           onClick={() => setActiveTab("ongoing")}
@@ -136,8 +80,6 @@ function Competitions() {
           Past
         </button>
       </div>
-
-      {/* Competition List */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {filteredCompetitions.length === 0 ? (
           <p className="text-slate-600 font-inter col-span-2">
@@ -160,7 +102,7 @@ function Competitions() {
                 {comp.title}
               </h2>
               <p className="text-sm font-inter text-slate-600 mb-2">
-                Posted on: {comp.datePosted}
+                Posted on: {new Date(comp.datePosted).toLocaleDateString()}
               </p>
               <p className="text-slate-600 font-inter mb-4 line-clamp-3">
                 {comp.description}
@@ -174,12 +116,52 @@ function Competitions() {
                     {comp.entryRequirements}
                   </p>
                   <div className="flex space-x-4">
-                    <button
-                      onClick={() => openApplicationModal(comp)}
-                      className="bg-teal-600 text-white font-inter font-semibold py-2 px-4 rounded-lg hover:bg-teal-500 transition-colors"
-                    >
-                      Apply
-                    </button>
+                    {user ? (
+                      userData?.subscribed ? (
+                        <button
+                          onClick={() => openApplicationModal(comp)}
+                          className="bg-teal-600 text-white font-inter font-semibold py-2 px-4 rounded-lg hover:bg-teal-500 transition-colors"
+                        >
+                          Apply
+                        </button>
+                      ) : (
+                        <div>
+                          <button
+                            disabled
+                            className="bg-slate-400 text-white font-inter font-semibold py-2 px-4 rounded-lg cursor-not-allowed"
+                          >
+                            Apply
+                          </button>
+                          <p className="text-red-500 font-inter text-sm mt-2">
+                            <button
+                              onClick={openSubscriptionModal}
+                              className="text-teal-600 hover:underline"
+                            >
+                              Subscribe
+                            </button>{" "}
+                            to apply for competitions.
+                          </p>
+                        </div>
+                      )
+                    ) : (
+                      <div>
+                        <button
+                          disabled
+                          className="bg-slate-400 text-white font-inter font-semibold py-2 px-4 rounded-lg cursor-not-allowed"
+                        >
+                          Apply
+                        </button>
+                        <p className="text-red-500 font-inter text-sm mt-2">
+                          <Link
+                            to="/login"
+                            className="text-teal-600 hover:underline"
+                          >
+                            Log in
+                          </Link>{" "}
+                          and subscribe to apply.
+                        </p>
+                      </div>
+                    )}
                     {comp.externalLink && (
                       <a
                         href={comp.externalLink}
@@ -218,8 +200,6 @@ function Competitions() {
           ))
         )}
       </div>
-
-      {/* Application Modal */}
       {selectedCompetition && (
         <CompetitionApplicationModal
           isOpen={isApplicationOpen}
@@ -227,6 +207,10 @@ function Competitions() {
           competitionTitle={selectedCompetition.title}
         />
       )}
+      <SubscriptionModal
+        isOpen={isSubscriptionOpen}
+        onClose={closeSubscriptionModal}
+      />
     </div>
   );
 }

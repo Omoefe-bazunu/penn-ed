@@ -1,42 +1,185 @@
 // src/components/forms/CreatePostForm.jsx
 import { useState } from "react";
+import {
+  addDoc,
+  collection,
+  serverTimestamp,
+  updateDoc,
+  doc,
+  arrayUnion,
+} from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { dbase, storage } from "../../firebase";
+import { useAuth } from "../../context/AuthContext";
 
 function CreatePostForm({ isOpen, onClose }) {
   const [postType, setPostType] = useState("single"); // single or series
   const [formData, setFormData] = useState({
     singleTitle: "",
     singleContent: "",
-    singleImage: "",
     seriesTitle: "",
     episodeTitle: "",
     episodeContent: "",
-    seriesImage: "",
   });
+  const [file, setFile] = useState(null);
+  const [preview, setPreview] = useState(null);
+  const [error, setError] = useState("");
+  const { user } = useAuth();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleFileChange = (e) => {
+    const selectedFile = e.target.files[0];
+    if (selectedFile) {
+      const validTypes = ["image/png", "image/jpeg"];
+      if (!validTypes.includes(selectedFile.type)) {
+        setError("Please upload a PNG or JPEG image.");
+        setFile(null);
+        setPreview(null);
+        return;
+      }
+      if (selectedFile.size > 5 * 1024 * 1024) {
+        setError("Image size must be less than 5MB.");
+        setFile(null);
+        setPreview(null);
+        return;
+      }
+      setError("");
+      setFile(selectedFile);
+      setPreview(URL.createObjectURL(selectedFile));
+    } else {
+      setFile(null);
+      setPreview(null);
+    }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Dummy submission
-    console.log("Create Post Data:", { postType, ...formData });
-    alert(
-      postType === "single"
-        ? "Single Post submitted (dummy)"
-        : "Series with Episode submitted (dummy)"
-    );
-    // Reset form
-    setFormData({
-      singleTitle: "",
-      singleContent: "",
-      singleImage: "",
-      seriesTitle: "",
-      episodeTitle: "",
-      episodeContent: "",
-      seriesImage: "",
-    });
-    onClose(); // Close modal
+    if (!user) {
+      setError("Please log in to create a post.");
+      return;
+    }
+
+    try {
+      if (postType === "single") {
+        // Single Post
+        if (!formData.singleTitle || !formData.singleContent) {
+          setError("Title and content are required.");
+          return;
+        }
+
+        // Create post doc
+        const postRef = await addDoc(collection(dbase, "posts"), {});
+        let imageUrl = null;
+
+        // Upload image if provided
+        if (file) {
+          const storageRef = ref(
+            storage,
+            `images/posts/${postRef.id}/${file.name}`
+          );
+          await uploadBytes(storageRef, file);
+          imageUrl = await getDownloadURL(storageRef);
+        }
+
+        // Save post
+        const postData = {
+          title: formData.singleTitle,
+          content: formData.singleContent,
+          image: imageUrl,
+          datePosted: serverTimestamp(),
+          createdBy: user.uid,
+        };
+        await updateDoc(postRef, postData);
+
+        // Update user posts
+        await updateDoc(doc(dbase, "users", user.uid), {
+          posts: arrayUnion({ id: postRef.id, ...postData }),
+        });
+
+        alert("Single Post created successfully!");
+      } else {
+        // Series
+        if (
+          !formData.seriesTitle ||
+          !formData.episodeTitle ||
+          !formData.episodeContent
+        ) {
+          setError(
+            "Series title, episode title, and episode content are required."
+          );
+          return;
+        }
+
+        // Create series doc
+        const seriesRef = await addDoc(collection(dbase, "series"), {});
+        let imageUrl = null;
+
+        // Upload image if provided
+        if (file) {
+          const storageRef = ref(
+            storage,
+            `images/series/${seriesRef.id}/${file.name}`
+          );
+          await uploadBytes(storageRef, file);
+          imageUrl = await getDownloadURL(storageRef);
+        }
+
+        // Save series
+        const seriesData = {
+          title: formData.seriesTitle,
+          image: imageUrl,
+          datePosted: serverTimestamp(),
+          createdBy: user.uid,
+        };
+        await updateDoc(seriesRef, seriesData);
+
+        // Save episode
+        const episodeRef = await addDoc(
+          collection(dbase, "series", seriesRef.id, "episodes"),
+          {
+            title: formData.episodeTitle,
+            content: formData.episodeContent,
+            datePosted: serverTimestamp(),
+          }
+        );
+
+        // Update user series
+        await updateDoc(doc(dbase, "users", user.uid), {
+          series: arrayUnion({
+            id: seriesRef.id,
+            ...seriesData,
+            episodes: [
+              {
+                id: episodeRef.id,
+                title: formData.episodeTitle,
+                content: formData.episodeContent,
+                datePosted: serverTimestamp(),
+              },
+            ],
+          }),
+        });
+
+        alert("Series with Episode created successfully!");
+      }
+
+      // Reset form
+      setFormData({
+        singleTitle: "",
+        singleContent: "",
+        seriesTitle: "",
+        episodeTitle: "",
+        episodeContent: "",
+      });
+      setFile(null);
+      setPreview(null);
+      setError("");
+      onClose();
+    } catch (err) {
+      setError("Failed to create post: " + err.message);
+    }
   };
 
   if (!isOpen) return null;
@@ -145,17 +288,22 @@ function CreatePostForm({ isOpen, onClose }) {
                   htmlFor="singleImage"
                   className="block text-sm font-inter text-slate-600 mb-1"
                 >
-                  Image URL (Optional)
+                  Featured Image (Optional)
                 </label>
                 <input
-                  type="url"
+                  type="file"
                   id="singleImage"
-                  name="singleImage"
-                  value={formData.singleImage}
-                  onChange={handleChange}
+                  accept="image/png,image/jpeg"
+                  onChange={handleFileChange}
                   className="w-full p-2 border border-slate-300 rounded-md font-inter text-slate-800"
-                  placeholder="https://example.com/image.jpg"
                 />
+                {preview && (
+                  <img
+                    src={preview}
+                    alt="Preview"
+                    className="mt-2 w-32 h-32 object-cover rounded-md"
+                  />
+                )}
               </div>
             </div>
           )}
@@ -219,20 +367,27 @@ function CreatePostForm({ isOpen, onClose }) {
                   htmlFor="seriesImage"
                   className="block text-sm font-inter text-slate-600 mb-1"
                 >
-                  Series Image URL (Optional)
+                  Series Image (Optional)
                 </label>
                 <input
-                  type="url"
+                  type="file"
                   id="seriesImage"
-                  name="seriesImage"
-                  value={formData.seriesImage}
-                  onChange={handleChange}
+                  accept="image/png,image/jpeg"
+                  onChange={handleFileChange}
                   className="w-full p-2 border border-slate-300 rounded-md font-inter text-slate-800"
-                  placeholder="https://example.com/image.jpg"
                 />
+                {preview && (
+                  <img
+                    src={preview}
+                    alt="Preview"
+                    className="mt-2 w-32 h-32 object-cover rounded-md"
+                  />
+                )}
               </div>
             </div>
           )}
+
+          {error && <p className="text-red-500 font-inter mb-4">{error}</p>}
 
           {/* Form Actions */}
           <div className="flex justify-end space-x-4">

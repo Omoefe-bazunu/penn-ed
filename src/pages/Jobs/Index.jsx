@@ -1,116 +1,154 @@
 // src/pages/Jobs/Index.jsx
-import { useState } from "react";
-import CreateJobForm from "../../components/forms/CreateJobForm";
-import JobDetailsModal from "../../components/jobDetailsModal";
-
-// Dummy job data
-const dummyJobs = [
-  {
-    id: "1",
-    title: "Freelance Content Writer",
-    datePosted: "April 10, 2025",
-    description:
-      "Join our team to create engaging blog posts and articles for various clients. Flexible hours, remote work.",
-    image: "https://via.placeholder.com/400x200?text=Content+Writer",
-    externalLink: "https://example.com/apply/content-writer",
-  },
-  {
-    id: "2",
-    title: "Scriptwriter for Short Films",
-    datePosted: "April 8, 2025",
-    description:
-      "We’re looking for a creative scriptwriter to develop compelling scripts for short films. Experience in storytelling required.",
-    image: "https://via.placeholder.com/400x200?text=Scriptwriter",
-  },
-  {
-    id: "3",
-    title: "Copyeditor (Part-Time)",
-    datePosted: "April 5, 2025",
-    description:
-      "Polish manuscripts and marketing content for clarity and impact. Attention to detail is a must.",
-    image: "https://via.placeholder.com/400x200?text=Copyeditor",
-    externalLink: "https://example.com/apply/copyeditor",
-  },
-  {
-    id: "4",
-    title: "Technical Writer",
-    datePosted: "April 3, 2025",
-    description:
-      "Create clear documentation for software products. Knowledge of tech and strong writing skills needed.",
-  },
-  {
-    id: "5",
-    title: "Poetry Contributor",
-    datePosted: "April 1, 2025",
-    description:
-      "Submit original poetry for our literary magazine. All styles welcome, passion for verse required.",
-    image: "https://via.placeholder.com/400x200?text=Poetry",
-    externalLink: "https://example.com/apply/poetry",
-  },
-];
+import { useState, useEffect } from "react";
+import {
+  collection,
+  query,
+  orderBy,
+  limit,
+  startAfter,
+  getDocs,
+  getCountFromServer,
+} from "firebase/firestore";
+import { dbase } from "../../firebase";
+import JobCard from "../../components/ui/JobCard";
 
 function Jobs() {
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [selectedJob, setSelectedJob] = useState(null);
+  const [jobs, setJobs] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [lastDoc, setLastDoc] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const jobsPerPage = 6;
 
-  const openForm = () => setIsFormOpen(true);
-  const closeForm = () => setIsFormOpen(false);
+  // Fetch total job count for pagination
+  useEffect(() => {
+    const fetchJobCount = async () => {
+      try {
+        const coll = collection(dbase, "jobs");
+        const snapshot = await getCountFromServer(coll);
+        const count = snapshot.data().count;
+        setTotalPages(Math.ceil(count / jobsPerPage));
+      } catch (err) {
+        setError("Failed to load job count: " + err.message);
+      }
+    };
+    fetchJobCount();
+  }, []);
 
-  const openJobModal = (job) => setSelectedJob(job);
-  const closeJobModal = () => setSelectedJob(null);
+  // Fetch jobs for current page
+  useEffect(() => {
+    const fetchJobs = async () => {
+      setLoading(true);
+      try {
+        let jobQuery = query(
+          collection(dbase, "jobs"),
+          orderBy("datePosted", "desc"),
+          limit(jobsPerPage)
+        );
+
+        // Adjust query for pagination
+        if (currentPage > 1 && lastDoc) {
+          jobQuery = query(
+            collection(dbase, "jobs"),
+            orderBy("datePosted", "desc"),
+            startAfter(lastDoc),
+            limit(jobsPerPage)
+          );
+        }
+
+        const querySnapshot = await getDocs(jobQuery);
+        const jobList = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        // Update last document for next page
+        setLastDoc(querySnapshot.docs[querySnapshot.docs.length - 1] || null);
+        setJobs(jobList);
+        setLoading(false);
+      } catch (err) {
+        setError("Failed to load jobs: " + err.message);
+        setLoading(false);
+      }
+    };
+    fetchJobs();
+  }, [currentPage, lastDoc]);
+
+  const handlePrevious = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+      setLastDoc(null); // Reset for accurate fetching
+    }
+  };
+
+  const handleNext = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const handlePageClick = (page) => {
+    setCurrentPage(page);
+    setLastDoc(null); // Reset for accurate fetching
+  };
+
+  if (loading) return <div className="text-center py-10">Loading...</div>;
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold font-poppins text-slate-800">
-          Job Opportunities
-        </h1>
-        <button
-          onClick={openForm}
-          className="bg-teal-600 text-white font-inter font-semibold py-2 px-4 rounded-lg hover:bg-teal-500 transition-colors"
-        >
-          Post New Job
-        </button>
-      </div>
-
-      {/* Create Job Form Modal */}
-      <CreateJobForm isOpen={isFormOpen} onClose={closeForm} />
-
-      {/* Job List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {dummyJobs.map((job) => (
-          <div
-            key={job.id}
-            className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow"
-            onClick={() => openJobModal(job)}
-          >
-            {job.image && (
-              <img
-                src={job.image}
-                alt={job.title}
-                className="w-full h-32 object-cover rounded-md mb-4"
-              />
-            )}
-            <h2 className="text-xl font-semibold font-poppins text-slate-800 mb-2">
-              {job.title}
-            </h2>
-            <p className="text-sm font-inter text-slate-600 mb-2">
-              Posted on: {job.datePosted}
-            </p>
-            <p className="text-slate-600 font-inter line-clamp-3">
-              {job.description}
-            </p>
+      <h1 className="text-3xl font-bold font-poppins text-slate-800 mb-6">
+        Job Opportunities
+      </h1>
+      {error && <p className="text-red-500 font-inter mb-4">{error}</p>}
+      {jobs.length === 0 ? (
+        <p className="text-slate-600 font-inter">No jobs available.</p>
+      ) : (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+            {jobs.map((job) => (
+              <JobCard key={job.id} job={job} />
+            ))}
           </div>
-        ))}
-      </div>
-
-      {/* Job Details Modal */}
-      <JobDetailsModal
-        job={selectedJob}
-        isOpen={!!selectedJob}
-        onClose={closeJobModal}
-      />
+          <div className="flex justify-center items-center space-x-2">
+            <button
+              onClick={handlePrevious}
+              disabled={currentPage === 1}
+              className={`py-2 px-4 rounded-lg font-inter font-semibold ${
+                currentPage === 1
+                  ? "bg-slate-300 text-slate-500 cursor-not-allowed"
+                  : "bg-teal-600 text-white hover:bg-teal-500"
+              } transition-colors`}
+            >
+              Previous
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <button
+                key={page}
+                onClick={() => handlePageClick(page)}
+                className={`py-1 px-3 rounded-md font-inter ${
+                  currentPage === page
+                    ? "bg-teal-600 text-white"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                } transition-colors`}
+              >
+                {page}
+              </button>
+            ))}
+            <button
+              onClick={handleNext}
+              disabled={currentPage === totalPages}
+              className={`py-2 px-4 rounded-lg font-inter font-semibold ${
+                currentPage === totalPages
+                  ? "bg-slate-300 text-slate-500 cursor-not-allowed"
+                  : "bg-teal-600 text-white hover:bg-teal-500"
+              } transition-colors`}
+            >
+              Next
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }

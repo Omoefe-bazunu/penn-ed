@@ -1,5 +1,6 @@
-// src/pages/Contact.jsx
 import { useState } from "react";
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { dbase } from "../../firebase";
 
 function Contact() {
   const [formData, setFormData] = useState({
@@ -7,18 +8,27 @@ function Contact() {
     email: "",
     message: "",
   });
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Dummy submission
-    console.log("Contact Form Data:", formData);
-    alert("Message sent (dummy)");
-    // Reset form
-    setFormData({ name: "", email: "", message: "" });
+    setError("");
+    setSuccess("");
+    try {
+      await addDoc(collection(dbase, "contacts"), {
+        ...formData,
+        createdAt: serverTimestamp(),
+      });
+      setSuccess("Message sent successfully!");
+      setFormData({ name: "", email: "", message: "" });
+    } catch (err) {
+      setError("Failed to send message: " + err.message);
+    }
   };
 
   return (
@@ -86,6 +96,10 @@ function Contact() {
                 required
               ></textarea>
             </div>
+            {error && <p className="text-red-500 font-inter mb-4">{error}</p>}
+            {success && (
+              <p className="text-teal-600 font-inter mb-4">{success}</p>
+            )}
             <button
               type="submit"
               className="bg-teal-600 text-white font-inter font-semibold py-2 px-4 rounded-lg hover:bg-teal-500 transition-colors"

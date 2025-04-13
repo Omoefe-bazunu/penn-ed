@@ -1,11 +1,16 @@
-// src/components/forms/CreateJobForm.jsx
-import { useState } from "react";
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+// src/components/forms/UpdateJobForm.jsx
+import { useState, useEffect } from "react";
+import { doc, updateDoc, deleteDoc } from "firebase/firestore";
+import {
+  ref,
+  uploadBytes,
+  getDownloadURL,
+  deleteObject,
+} from "firebase/storage";
 import { dbase, storage } from "../../firebase";
 import { useAuth } from "../../context/AuthContext";
 
-function CreateJobForm({ isOpen, onClose }) {
+function UpdateJobForm({ isOpen, onClose, job }) {
   const [formData, setFormData] = useState({
     title: "",
     company: "",
@@ -16,6 +21,18 @@ function CreateJobForm({ isOpen, onClose }) {
   const [preview, setPreview] = useState(null);
   const [error, setError] = useState("");
   const { user } = useAuth();
+
+  useEffect(() => {
+    if (job) {
+      setFormData({
+        title: job.title || "",
+        company: job.company || "",
+        description: job.description || "",
+        externalLink: job.externalLink || "",
+      });
+      setPreview(job.image || null);
+    }
+  }, [job]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -40,49 +57,60 @@ function CreateJobForm({ isOpen, onClose }) {
       setError("");
       setFile(selectedFile);
       setPreview(URL.createObjectURL(selectedFile));
+    } else {
+      setFile(null);
+      setPreview(job?.image || null);
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!user) {
-      setError("Please log in to add a job.");
+      setError("Please log in.");
       return;
     }
-    if (!file) {
-      setError("Please upload a featured image.");
+    if (!formData.title || !formData.description) {
+      setError("Title and description are required.");
       return;
     }
     try {
-      // Upload image
-      const docRef = await addDoc(collection(dbase, "jobs"), {});
-      const storageRef = ref(storage, `images/jobs/${docRef.id}/${file.name}`);
-      await uploadBytes(storageRef, file);
-      const imageUrl = await getDownloadURL(storageRef);
-
-      // Save job
-      await updateDoc(docRef, {
+      let imageUrl = job?.image || null;
+      if (file) {
+        const storageRef = ref(storage, `images/jobs/${job.id}/${file.name}`);
+        await uploadBytes(storageRef, file);
+        imageUrl = await getDownloadURL(storageRef);
+      }
+      await updateDoc(doc(dbase, "jobs", job.id), {
         title: formData.title,
         company: formData.company,
         description: formData.description,
         externalLink: formData.externalLink,
         image: imageUrl,
-        datePosted: serverTimestamp(),
-        createdBy: user.uid,
       });
-
-      alert("Job added successfully!");
-      setFormData({
-        title: "",
-        company: "",
-        description: "",
-        externalLink: "",
-      });
-      setFile(null);
-      setPreview(null);
+      alert("Job updated successfully!");
       onClose();
     } catch (err) {
-      setError("Failed to add job: " + err.message);
+      setError("Failed to update job: " + err.message);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!user) {
+      setError("Please log in.");
+      return;
+    }
+    if (window.confirm("Are you sure you want to delete this job?")) {
+      try {
+        if (job.image) {
+          const imageRef = ref(storage, job.image);
+          await deleteObject(imageRef).catch(() => {});
+        }
+        await deleteDoc(doc(dbase, "jobs", job.id));
+        alert("Job deleted successfully!");
+        onClose();
+      } catch (err) {
+        setError("Failed to delete job: " + err.message);
+      }
     }
   };
 
@@ -93,7 +121,7 @@ function CreateJobForm({ isOpen, onClose }) {
       <div className="bg-white rounded-lg shadow-md max-w-lg w-full mx-4 p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold font-poppins text-slate-800">
-            Add New Job
+            Update Job
           </h2>
           <button
             onClick={onClose}
@@ -147,7 +175,6 @@ function CreateJobForm({ isOpen, onClose }) {
               value={formData.company}
               onChange={handleChange}
               className="w-full p-2 border border-slate-300 rounded-md font-inter text-slate-800"
-              required
             />
           </div>
           <div className="mb-4">
@@ -188,7 +215,7 @@ function CreateJobForm({ isOpen, onClose }) {
               htmlFor="image"
               className="block text-sm font-inter text-slate-600 mb-1"
             >
-              Featured Image
+              Featured Image (Optional)
             </label>
             <input
               type="file"
@@ -196,7 +223,6 @@ function CreateJobForm({ isOpen, onClose }) {
               accept="image/png,image/jpeg"
               onChange={handleFileChange}
               className="w-full p-2 border border-slate-300 rounded-md font-inter text-slate-800"
-              required
             />
             {preview && (
               <img
@@ -207,20 +233,29 @@ function CreateJobForm({ isOpen, onClose }) {
             )}
           </div>
           {error && <p className="text-red-500 font-inter mb-4">{error}</p>}
-          <div className="flex justify-end space-x-4">
+          <div className="flex justify-between">
             <button
               type="button"
-              onClick={onClose}
-              className="bg-slate-600 text-white font-inter font-semibold py-2 px-4 rounded-lg hover:bg-slate-500 transition-colors"
+              onClick={handleDelete}
+              className="bg-red-600 text-white font-inter font-semibold py-2 px-4 rounded-lg hover:bg-red-500 transition-colors"
             >
-              Cancel
+              Delete Job
             </button>
-            <button
-              type="submit"
-              className="bg-teal-600 text-white font-inter font-semibold py-2 px-4 rounded-lg hover:bg-teal-500 transition-colors"
-            >
-              Add Job
-            </button>
+            <div className="flex space-x-4">
+              <button
+                type="button"
+                onClick={onClose}
+                className="bg-slate-600 text-white font-inter font-semibold py-2 px-4 rounded-lg hover:bg-slate-500 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="bg-teal-600 text-white font-inter font-semibold py-2 px-4 rounded-lg hover:bg-teal-500 transition-colors"
+              >
+                Update Job
+              </button>
+            </div>
           </div>
         </form>
       </div>
@@ -228,4 +263,4 @@ function CreateJobForm({ isOpen, onClose }) {
   );
 }
 
-export default CreateJobForm;
+export default UpdateJobForm;
