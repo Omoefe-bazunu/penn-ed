@@ -6,7 +6,7 @@ import Navbar from "./components/ui/bottomTab";
 import TopNavbar from "./components/ui/topTab";
 import { AuthContextProvider } from "./context/AuthContext";
 import Home from "./pages/Home";
-import About from "./pages/About";
+import About from "./pages/About/Index";
 import Contact from "./pages/Contact/Index";
 import NotFound from "./pages/NotFound";
 
