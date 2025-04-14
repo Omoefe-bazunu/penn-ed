@@ -1,4 +1,3 @@
-// src/pages/About.jsx
 function About() {
   // Social links (placeholders)
   const socialLinks = [
