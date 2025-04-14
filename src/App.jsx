@@ -20,7 +20,7 @@ const Jobs = lazy(() => import("./pages/Jobs/Index"));
 const Courses = lazy(() => import("./pages/Courses/Index"));
 const Competitions = lazy(() => import("./pages/Competitions/Index"));
 const Login = lazy(() => import("./pages/Auth/Login"));
-const Signup = lazy(() => import("./pages/Auth/SignUp"));
+const Signup = lazy(() => import("./pages/Auth/Signup"));
 
 const PublicPortfolio = lazy(() => import("./pages/Dashboard/PublicPortfolio"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard/Index"));
