@@ -14,12 +14,10 @@ function Dashboard() {
 
   // Handle navigation in useEffect to prevent render-phase updates
   useEffect(() => {
-    if (!loading) {
-      if (!user) {
-        navigate("/login", { replace: true });
-      } else if (user && !user.emailVerified) {
-        navigate("/verify-email", { replace: true });
-      }
+    if (!loading && !user) {
+      navigate("/login", { replace: true });
+    } else if (!loading && user && !user.emailVerified) {
+      navigate("/verify-email", { replace: true });
     }
   }, [user, loading, navigate]);
 
@@ -29,15 +27,21 @@ function Dashboard() {
   const closePostForm = () => setIsPostFormOpen(false);
 
   const handleCancelSubscription = async () => {
-    if (!user) return;
+    if (
+      !user ||
+      !window.confirm("Are you sure you want to cancel your subscription?")
+    )
+      return;
+
     try {
       await updateDoc(doc(dbase, "users", user.uid), {
         subscribed: false,
         subscriptionDate: null,
       });
-      alert("Subscription cancelled.");
+      alert("Subscription cancelled successfully.");
     } catch (err) {
-      alert("Error cancelling subscription: " + err.message);
+      console.error("Error cancelling subscription:", err);
+      alert("Error cancelling subscription. Please try again.");
     }
   };
 

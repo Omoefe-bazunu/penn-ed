@@ -109,7 +109,7 @@ function SubscriptionModal({ isOpen, onClose }) {
           </button>
         </div>
         <p className="text-slate-600 font-inter mb-4">
-          Subscribe for a monthly fee of <strong>NGN 500</strong>. Your
+          Subscribe for a monthly fee of <strong>NGN 1,000 </strong>. Your
           subscription will be activated after admin verification which takes
           less than 20mins
         </p>
@@ -117,6 +117,7 @@ function SubscriptionModal({ isOpen, onClose }) {
           <h3 className="text-lg font-semibold font-poppins text-slate-800 mb-2">
             Payment Details
           </h3>
+
           <p className="text-slate-600 font-inter">
             <strong>Bank Name:</strong> Moniepoint MFB
           </p>

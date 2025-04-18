@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { collection, getDocs } from "firebase/firestore";
 import { dbase } from "../../firebase";
@@ -15,22 +15,47 @@ function Courses() {
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [isSubscriptionOpen, setIsSubscriptionOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState(null);
+  const [retryCount, setRetryCount] = useState(0);
   const { user, userData, loading: authLoading } = useAuth();
 
   const fetchCourses = async () => {
-    const querySnapshot = await getDocs(collection(dbase, "courses"));
-    return querySnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    try {
+      const querySnapshot = await getDocs(collection(dbase, "courses"));
+      return querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+        datePosted: doc.data().datePosted?.toDate() || new Date(),
+      }));
+    } catch (error) {
+      console.error("Error fetching courses:", error);
+      throw new Error("Failed to load courses. Please check your connection.");
+    }
   };
 
   const {
-    data: courses,
+    data: courses = [],
     isLoading,
+    isError,
     error,
     refetch,
   } = useQuery({
     queryKey: ["courses"],
     queryFn: fetchCourses,
+    retry: 3,
+    retryDelay: (attempt) => Math.min(attempt * 1000, 5000),
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
+
+  // Auto-retry mechanism for connection issues
+  useEffect(() => {
+    if (isError && retryCount < 3) {
+      const timer = setTimeout(() => {
+        setRetryCount(retryCount + 1);
+        refetch();
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [isError, retryCount, refetch]);
 
   const openForm = () => {
     if (!user) {
@@ -39,6 +64,7 @@ function Courses() {
     }
     setIsFormOpen(true);
   };
+
   const closeForm = () => setIsFormOpen(false);
 
   const openCourseModal = (course) => {
@@ -61,12 +87,51 @@ function Courses() {
     refetch();
   };
 
-  if (isLoading || authLoading)
-    return <div className="text-center py-10">Loading...</div>;
-  if (error)
+  const handleCreateSuccess = () => {
+    closeForm();
+    refetch();
+  };
+
+  const handleDeleteSuccess = () => {
+    refetch();
+  };
+
+  if (authLoading) {
     return (
-      <div className="text-center py-10 text-red-500">{error.message}</div>
+      <div className="text-center py-10">
+        <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-teal-600"></div>
+        <p className="mt-2 text-slate-600">Checking authentication...</p>
+      </div>
     );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="text-center py-10">
+        <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-teal-600"></div>
+        <p className="mt-2 text-slate-600">Loading courses...</p>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="text-center py-10">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 max-w-md mx-auto">
+          {error.message}
+        </div>
+        <button
+          onClick={() => {
+            setRetryCount(0);
+            refetch();
+          }}
+          className="bg-teal-600 text-white font-inter font-semibold py-2 px-4 rounded-lg hover:bg-teal-500 transition-colors"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -83,21 +148,30 @@ function Courses() {
           </button>
         )}
       </div>
-      <CreateCourseForm isOpen={isFormOpen} onClose={closeForm} />
+
+      <CreateCourseForm
+        isOpen={isFormOpen}
+        onClose={closeForm}
+        onSuccess={handleCreateSuccess}
+      />
+
       {!userData?.subscribed && user && (
-        <p className="text-red-500 font-inter mb-6 bg-white shadow-md rounded-lg w-fit p-4">
-          Please{" "}
-          <button
-            onClick={openSubscriptionModal}
-            className="text-teal-600 hover:underline"
-          >
-            subscribe
-          </button>{" "}
-          to access courses.
-        </p>
+        <div className="bg-white shadow-md rounded-lg p-4 mb-6 w-fit">
+          <p className="text-red-500 font-inter">
+            Please{" "}
+            <button
+              onClick={openSubscriptionModal}
+              className="text-teal-600 hover:underline font-semibold"
+            >
+              subscribe
+            </button>{" "}
+            to access course content.
+          </p>
+        </div>
       )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {courses && courses.length > 0 ? (
+        {courses.length > 0 ? (
           courses.map((course) => (
             <div
               key={course.id}
@@ -132,7 +206,7 @@ function Courses() {
                   </button>
                   <DeleteCourseButton
                     courseId={course.id}
-                    onSuccess={refetch}
+                    onSuccess={handleDeleteSuccess}
                     className="p-1 rounded-full bg-white shadow-md hover:bg-slate-100"
                   />
                 </div>
@@ -153,30 +227,38 @@ function Courses() {
                 maxLength={200}
               />
               <p className="text-sm font-inter text-slate-600">
-                Posted on:{" "}
-                {course.datePosted?.toDate
-                  ? course.datePosted.toDate().toLocaleDateString()
-                  : new Date(
-                      course.datePosted?.seconds * 1000
-                    ).toLocaleDateString()}
+                Posted on: {course.datePosted.toLocaleDateString()}
               </p>
             </div>
           ))
         ) : (
-          <p className="text-slate-600 font-inter col-span-2">
-            No courses available.
-          </p>
+          <div className="col-span-2 text-center py-10">
+            <p className="text-slate-600 font-inter mb-4">
+              No courses available.
+            </p>
+            {user?.email === "raniem57@gmail.com" && (
+              <button
+                onClick={openForm}
+                className="bg-teal-600 text-white font-inter font-semibold py-2 px-4 rounded-lg hover:bg-teal-500 transition-colors"
+              >
+                Create First Course
+              </button>
+            )}
+          </div>
         )}
       </div>
+
       <CourseDetailsModal
         course={selectedCourse}
         isOpen={!!selectedCourse}
         onClose={closeCourseModal}
       />
+
       <SubscriptionModal
         isOpen={isSubscriptionOpen}
         onClose={closeSubscriptionModal}
       />
+
       {editingCourse && (
         <EditCourseForm
           course={editingCourse}

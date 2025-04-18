@@ -36,7 +36,8 @@ function Jobs() {
         const count = snapshot.data().count;
         setTotalPages(Math.ceil(count / jobsPerPage));
       } catch (err) {
-        setError("Failed to load job count: " + err.message);
+        console.error("Error fetching job count:", err);
+        setError("Failed to load job count. Please try again later.");
       }
     };
     fetchJobCount();
@@ -45,6 +46,7 @@ function Jobs() {
   // Fetch jobs for current page
   const fetchJobs = async () => {
     setLoading(true);
+    setError("");
     try {
       let jobQuery = query(
         collection(dbase, "jobs"),
@@ -66,26 +68,57 @@ function Jobs() {
       const jobList = querySnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
+        datePosted: doc.data().datePosted?.toDate() || new Date(),
       }));
 
       // Update last document for next page
-      setLastDoc(querySnapshot.docs[querySnapshot.docs.length - 1] || null);
+      if (querySnapshot.docs.length > 0) {
+        setLastDoc(querySnapshot.docs[querySnapshot.docs.length - 1]);
+      } else {
+        setLastDoc(null);
+      }
+
       setJobs(jobList);
-      setLoading(false);
     } catch (err) {
-      setError("Failed to load jobs: " + err.message);
+      console.error("Error fetching jobs:", err);
+      setError(
+        "Failed to load jobs. Please check your connection and try again."
+      );
+      // Reset to first page if error occurs
+      if (currentPage > 1) {
+        setCurrentPage(1);
+        setLastDoc(null);
+      }
+    } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchJobs();
-  }, [currentPage, lastDoc]);
+    const controller = new AbortController();
+    let timeoutId;
+
+    const fetchWithRetry = async () => {
+      try {
+        await fetchJobs();
+      } catch (err) {
+        console.error("Fetch error:", err);
+        // Retry after 5 seconds if error occurs
+        timeoutId = setTimeout(fetchWithRetry, 5000);
+      }
+    };
+
+    fetchWithRetry();
+
+    return () => {
+      controller.abort();
+      clearTimeout(timeoutId);
+    };
+  }, [currentPage]);
 
   const handlePrevious = () => {
     if (currentPage > 1) {
       setCurrentPage(currentPage - 1);
-      setLastDoc(null); // Reset for accurate fetching
     }
   };
 
@@ -97,7 +130,6 @@ function Jobs() {
 
   const handlePageClick = (page) => {
     setCurrentPage(page);
-    setLastDoc(null); // Reset for accurate fetching
   };
 
   const handleEditClick = (job, e) => {
@@ -106,12 +138,14 @@ function Jobs() {
   };
 
   const handleDeleteSuccess = () => {
-    // If we're on the last page and delete the last item, go back a page
-    if (jobs.length === 1 && currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    } else {
-      fetchJobs();
-    }
+    // Refresh job count and reset to first page
+    setCurrentPage(1);
+    setLastDoc(null);
+    const coll = collection(dbase, "jobs");
+    getCountFromServer(coll).then((snapshot) => {
+      const count = snapshot.data().count;
+      setTotalPages(Math.ceil(count / jobsPerPage));
+    });
   };
 
   const handleEditSuccess = () => {
@@ -119,10 +153,21 @@ function Jobs() {
     fetchJobs();
   };
 
+  const handleCreateSuccess = () => {
+    closeForm();
+    // Refresh job count
+    const coll = collection(dbase, "jobs");
+    getCountFromServer(coll).then((snapshot) => {
+      const count = snapshot.data().count;
+      setTotalPages(Math.ceil(count / jobsPerPage));
+    });
+    // Reset to first page
+    setCurrentPage(1);
+    setLastDoc(null);
+  };
+
   const openForm = () => setIsFormOpen(true);
   const closeForm = () => setIsFormOpen(false);
-
-  if (loading) return <div className="text-center py-10">Loading...</div>;
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -139,16 +184,34 @@ function Jobs() {
           </button>
         )}
       </div>
-      {error && <p className="text-red-500 font-inter mb-4">{error}</p>}
+
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          {error}
+        </div>
+      )}
 
       <CreateJobForm
         isOpen={isFormOpen}
         onClose={closeForm}
-        onSuccess={fetchJobs}
+        onSuccess={handleCreateSuccess}
       />
 
-      {jobs.length === 0 ? (
-        <p className="text-slate-600 font-inter">No jobs available.</p>
+      {loading ? (
+        <div className="text-center py-10">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-teal-600"></div>
+          <p className="mt-2 text-slate-600">Loading jobs...</p>
+        </div>
+      ) : jobs.length === 0 ? (
+        <div className="text-center py-10">
+          <p className="text-slate-600 font-inter">No jobs available.</p>
+          <button
+            onClick={fetchJobs}
+            className="mt-4 bg-teal-600 text-white font-inter font-semibold py-2 px-4 rounded-lg hover:bg-teal-500 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
@@ -187,43 +250,57 @@ function Jobs() {
               </div>
             ))}
           </div>
-          <div className="flex justify-center items-center space-x-2">
-            <button
-              onClick={handlePrevious}
-              disabled={currentPage === 1}
-              className={`py-2 px-4 rounded-lg font-inter font-semibold ${
-                currentPage === 1
-                  ? "bg-slate-300 text-slate-500 cursor-not-allowed"
-                  : "bg-teal-600 text-white hover:bg-teal-500"
-              } transition-colors`}
-            >
-              Previous
-            </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+          {totalPages > 1 && (
+            <div className="flex justify-center items-center space-x-2">
               <button
-                key={page}
-                onClick={() => handlePageClick(page)}
-                className={`py-1 px-3 rounded-md font-inter ${
-                  currentPage === page
-                    ? "bg-teal-600 text-white"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                onClick={handlePrevious}
+                disabled={currentPage === 1}
+                className={`py-2 px-4 rounded-lg font-inter font-semibold ${
+                  currentPage === 1
+                    ? "bg-slate-300 text-slate-500 cursor-not-allowed"
+                    : "bg-teal-600 text-white hover:bg-teal-500"
                 } transition-colors`}
               >
-                {page}
+                Previous
               </button>
-            ))}
-            <button
-              onClick={handleNext}
-              disabled={currentPage === totalPages}
-              className={`py-2 px-4 rounded-lg font-inter font-semibold ${
-                currentPage === totalPages
-                  ? "bg-slate-300 text-slate-500 cursor-not-allowed"
-                  : "bg-teal-600 text-white hover:bg-teal-500"
-              } transition-colors`}
-            >
-              Next
-            </button>
-          </div>
+              {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                let page;
+                if (totalPages <= 5) {
+                  page = i + 1;
+                } else if (currentPage <= 3) {
+                  page = i + 1;
+                } else if (currentPage >= totalPages - 2) {
+                  page = totalPages - 4 + i;
+                } else {
+                  page = currentPage - 2 + i;
+                }
+                return (
+                  <button
+                    key={page}
+                    onClick={() => handlePageClick(page)}
+                    className={`py-1 px-3 rounded-md font-inter ${
+                      currentPage === page
+                        ? "bg-teal-600 text-white"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    } transition-colors`}
+                  >
+                    {page}
+                  </button>
+                );
+              })}
+              <button
+                onClick={handleNext}
+                disabled={currentPage === totalPages}
+                className={`py-2 px-4 rounded-lg font-inter font-semibold ${
+                  currentPage === totalPages
+                    ? "bg-slate-300 text-slate-500 cursor-not-allowed"
+                    : "bg-teal-600 text-white hover:bg-teal-500"
+                } transition-colors`}
+              >
+                Next
+              </button>
+            </div>
+          )}
         </>
       )}
 

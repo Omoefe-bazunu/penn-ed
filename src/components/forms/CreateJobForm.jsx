@@ -18,10 +18,12 @@ function CreateJobForm({ isOpen, onClose }) {
     company: "",
     description: "",
     externalLink: "",
+    image: null,
   });
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { user } = useAuth();
 
   // Quill editor modules configuration
@@ -44,7 +46,6 @@ function CreateJobForm({ isOpen, onClose }) {
     ],
   };
 
-  // Quill editor formats configuration
   const formats = [
     "header",
     "bold",
@@ -74,66 +75,89 @@ function CreateJobForm({ isOpen, onClose }) {
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
-    if (selectedFile) {
-      const validTypes = ["image/png", "image/jpeg"];
-      if (!validTypes.includes(selectedFile.type)) {
-        setError("Please upload a PNG or JPEG image.");
-        setFile(null);
-        setPreview(null);
-        return;
-      }
-      if (selectedFile.size > 5 * 1024 * 1024) {
-        setError("Image size must be less than 5MB.");
-        setFile(null);
-        setPreview(null);
-        return;
-      }
-      setError("");
-      setFile(selectedFile);
-      setPreview(URL.createObjectURL(selectedFile));
+    if (!selectedFile) {
+      setFile(null);
+      setPreview(null);
+      return;
     }
+
+    const validTypes = ["image/png", "image/jpeg"];
+    if (!validTypes.includes(selectedFile.type)) {
+      setError("Please upload a PNG or JPEG image.");
+      return;
+    }
+
+    if (selectedFile.size > 5 * 1024 * 1024) {
+      setError("Image size must be less than 5MB.");
+      return;
+    }
+
+    setError("");
+    setFile(selectedFile);
+    setPreview(URL.createObjectURL(selectedFile));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
+    setError("");
+
     if (!user) {
       setError("Please log in to add a job.");
+      setIsSubmitting(false);
       return;
     }
-    if (!file) {
-      setError("Please upload a featured image.");
-      return;
-    }
-    try {
-      // Upload image
-      const docRef = await addDoc(collection(dbase, "jobs"), {});
-      const storageRef = ref(storage, `images/jobs/${docRef.id}/${file.name}`);
-      await uploadBytes(storageRef, file);
-      const imageUrl = await getDownloadURL(storageRef);
 
-      // Save job
-      await updateDoc(docRef, {
-        title: formData.title,
-        company: formData.company,
+    if (!formData.title || !formData.company || !formData.description) {
+      setError("Title, company, and description are required.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    try {
+      // Create job document first
+      const jobData = {
+        title: formData.title.trim(),
+        company: formData.company.trim(),
         description: formData.description,
-        externalLink: formData.externalLink,
-        image: imageUrl,
+        externalLink: formData.externalLink.trim() || null,
         datePosted: serverTimestamp(),
         createdBy: user.uid,
-      });
+        createdByName: user.displayName || "Anonymous",
+      };
 
-      alert("Job added successfully!");
+      // Upload image if provided
+      if (file) {
+        const docRef = await addDoc(collection(dbase, "jobs"), jobData);
+        const storageRef = ref(
+          storage,
+          `images/jobs/${docRef.id}/${file.name}`
+        );
+        await uploadBytes(storageRef, file);
+        const imageUrl = await getDownloadURL(storageRef);
+        await updateDoc(doc(dbase, "jobs", docRef.id), { image: imageUrl });
+      } else {
+        await addDoc(collection(dbase, "jobs"), jobData);
+      }
+
+      // Reset form
       setFormData({
         title: "",
         company: "",
         description: "",
         externalLink: "",
+        image: null,
       });
       setFile(null);
       setPreview(null);
+
+      alert("Job added successfully!");
       onClose();
     } catch (err) {
+      console.error("Error adding job:", err);
       setError("Failed to add job: " + err.message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -149,6 +173,7 @@ function CreateJobForm({ isOpen, onClose }) {
           <button
             onClick={onClose}
             className="text-slate-600 hover:text-slate-800"
+            disabled={isSubmitting}
           >
             <svg
               className="w-6 h-6"
@@ -172,7 +197,7 @@ function CreateJobForm({ isOpen, onClose }) {
               htmlFor="title"
               className="block text-sm font-inter text-slate-600 mb-1"
             >
-              Job Title
+              Job Title *
             </label>
             <input
               type="text"
@@ -182,6 +207,7 @@ function CreateJobForm({ isOpen, onClose }) {
               onChange={handleChange}
               className="w-full p-2 border border-slate-300 rounded-md font-inter text-slate-800"
               required
+              disabled={isSubmitting}
             />
           </div>
           <div className="mb-4">
@@ -189,7 +215,7 @@ function CreateJobForm({ isOpen, onClose }) {
               htmlFor="company"
               className="block text-sm font-inter text-slate-600 mb-1"
             >
-              Company
+              Company *
             </label>
             <input
               type="text"
@@ -199,6 +225,7 @@ function CreateJobForm({ isOpen, onClose }) {
               onChange={handleChange}
               className="w-full p-2 border border-slate-300 rounded-md font-inter text-slate-800"
               required
+              disabled={isSubmitting}
             />
           </div>
           <div className="mb-4">
@@ -206,7 +233,7 @@ function CreateJobForm({ isOpen, onClose }) {
               htmlFor="description"
               className="block text-sm font-inter text-slate-600 mb-1"
             >
-              Description
+              Description *
             </label>
             <ReactQuill
               theme="snow"
@@ -215,6 +242,7 @@ function CreateJobForm({ isOpen, onClose }) {
               modules={modules}
               formats={formats}
               className="bg-white rounded-md font-inter text-slate-800 mb-2"
+              readOnly={isSubmitting}
             />
           </div>
           <div className="mb-4">
@@ -222,7 +250,7 @@ function CreateJobForm({ isOpen, onClose }) {
               htmlFor="externalLink"
               className="block text-sm font-inter text-slate-600 mb-1"
             >
-              External Link
+              Application Link
             </label>
             <input
               type="url"
@@ -231,6 +259,8 @@ function CreateJobForm({ isOpen, onClose }) {
               value={formData.externalLink}
               onChange={handleChange}
               className="w-full p-2 border border-slate-300 rounded-md font-inter text-slate-800"
+              disabled={isSubmitting}
+              placeholder="https://example.com/apply"
             />
           </div>
           <div className="mb-4">
@@ -238,7 +268,7 @@ function CreateJobForm({ isOpen, onClose }) {
               htmlFor="image"
               className="block text-sm font-inter text-slate-600 mb-1"
             >
-              Featured Image
+              Featured Image (Optional)
             </label>
             <input
               type="file"
@@ -246,14 +276,27 @@ function CreateJobForm({ isOpen, onClose }) {
               accept="image/png,image/jpeg"
               onChange={handleFileChange}
               className="w-full p-2 border border-slate-300 rounded-md font-inter text-slate-800"
-              required
+              disabled={isSubmitting}
             />
             {preview && (
-              <img
-                src={preview}
-                alt="Preview"
-                className="mt-2 w-32 h-32 object-cover rounded-md"
-              />
+              <div className="mt-2">
+                <img
+                  src={preview}
+                  alt="Preview"
+                  className="w-32 h-32 object-cover rounded-md"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFile(null);
+                    setPreview(null);
+                  }}
+                  className="mt-2 text-sm text-red-600 hover:text-red-800"
+                  disabled={isSubmitting}
+                >
+                  Remove Image
+                </button>
+              </div>
             )}
           </div>
           {error && <p className="text-red-500 font-inter mb-4">{error}</p>}
@@ -261,17 +304,20 @@ function CreateJobForm({ isOpen, onClose }) {
             <button
               type="button"
               onClick={onClose}
-              className="bg-slate-600 text-white font-inter font-semibold py-2 px-4 rounded-lg hover:bg-slate-500 transition-colors"
+              className="bg-slate-600 text-white font-inter font-semibold py-2 px-4 rounded-lg hover:bg-slate-500 transition-colors disabled:opacity-50"
+              disabled={isSubmitting}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="bg-teal-600 text-white font-inter font-semibold py-2 px-4 rounded-lg hover:bg-teal-500 transition-colors"
+              className="bg-teal-600 text-white font-inter font-semibold py-2 px-4 rounded-lg hover:bg-teal-500 transition-colors disabled:opacity-50"
+              disabled={isSubmitting}
             >
-              Add Job
+              {isSubmitting ? "Adding..." : "Add Job"}
             </button>
           </div>
+          <p className="text-xs text-slate-500 mt-2">* Required fields</p>
         </form>
       </div>
     </div>
