@@ -1,5 +1,5 @@
-// src/pages/Posts/Index.jsx
 import { useState, useEffect } from "react";
+import SafeHTML from "./SafeHTML";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   collection,
@@ -9,25 +9,22 @@ import {
   startAfter,
   getDocs,
   getCountFromServer,
-  doc,
-  updateDoc,
-  arrayUnion,
-  arrayRemove,
-  getDoc,
 } from "firebase/firestore";
 import { dbase } from "../../firebase";
 import { useAuth } from "../../context/AuthContext";
-import Card from "../../components/ui/Card";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { toggleUpvote } from "../../utils/UpvoteUtils";
 
 function Posts() {
   const { user, userData } = useAuth();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState("single"); // single or series
-  const [expandedSeries, setExpandedSeries] = useState(null); // Track expanded series
-  const [selectedItem, setSelectedItem] = useState(null); // For modal (post or episode)
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState("single");
+  const [expandedSeries, setExpandedSeries] = useState(null);
+  const [expandedSeriesEpisode, setExpandedSeriesEpisode] = useState(null);
   const [currentPage, setCurrentPage] = useState({ single: 1, series: 1 });
   const [lastDoc, setLastDoc] = useState({ single: null, series: null });
+  const [error, setError] = useState("");
   const itemsPerPage = 6;
 
   // Fetch total counts for pagination
@@ -112,35 +109,38 @@ function Posts() {
 
   // Upvote/Unupvote mutation
   const upvoteMutation = useMutation({
-    mutationFn: async ({ id, type, isUpvoting }) => {
-      const docRef = doc(dbase, type === "post" ? "posts" : "series", id);
-      const userRef = doc(dbase, "users", user.uid);
-      await updateDoc(docRef, {
-        upvotes: isUpvoting
-          ? (await getDoc(docRef)).data().upvotes + 1
-          : (await getDoc(docRef)).data().upvotes - 1,
-      });
-      await updateDoc(userRef, {
-        upvotedPosts: isUpvoting ? arrayUnion(id) : arrayRemove(id),
-      });
+    mutationFn: async (postId) => {
+      return await toggleUpvote(user.uid, postId);
     },
-    onSuccess: (_, { id, type }) => {
-      queryClient.invalidateQueries([type === "post" ? "posts" : "series"]);
+    onSuccess: (result, postId) => {
+      if (result.success) {
+        queryClient.invalidateQueries(["posts"]);
+        queryClient.invalidateQueries(["userData", user.uid]);
+        setError("");
+      } else {
+        setError(result.error);
+      }
     },
-    onError: (err) => alert("Failed to update upvote: " + err.message),
+    onError: (error) => {
+      setError(error.message);
+    },
   });
 
-  const toggleUpvote = (id, type, isUpvoted) => {
+  // Handle upvote - now only for posts
+  const handleUpvote = (postId, isUpvoted) => {
     if (!user) {
-      alert("Please log in to upvote.");
+      setError("Please log in to upvote");
+      navigate("/login");
       return;
     }
-    upvoteMutation.mutate({ id, type, isUpvoting: !isUpvoted });
+    upvoteMutation.mutate(postId);
   };
 
   // Share link
   const shareLink = (id, type) => {
-    const url = `${window.location.origin}/posts/${id}`;
+    const url = `${window.location.origin}/${
+      type === "post" ? "posts" : "series"
+    }/${id}`;
     navigator.clipboard.writeText(url).then(() => {
       alert("Link copied to clipboard!");
     });
@@ -167,20 +167,15 @@ function Posts() {
     setLastDoc((prev) => ({ ...prev, [tab]: null }));
   };
 
-  // Open modal for post or episode
-  const openModal = async (item, type) => {
-    if (type === "episode") {
-      const episodeDoc = await getDoc(
-        doc(dbase, "series", item.seriesId, "episodes", item.id)
-      );
-      setSelectedItem({
-        ...item,
-        content: episodeDoc.data().content,
-        type: "episode",
-      });
-    } else {
-      setSelectedItem({ ...item, type: "post" });
-    }
+  // Toggle series expansion
+  const toggleSeries = (seriesId) => {
+    setExpandedSeries(expandedSeries === seriesId ? null : seriesId);
+    setExpandedSeriesEpisode(null);
+  };
+
+  // Toggle episode expansion
+  const toggleSeriesEpisode = (index) => {
+    setExpandedSeriesEpisode(expandedSeriesEpisode === index ? null : index);
   };
 
   // Update lastDoc after fetch
@@ -192,7 +187,10 @@ function Posts() {
       }));
     }
     if (seriesQuery.data) {
-      setLastDoc((prev) => ({ ...prev, series: seriesQuery.data.lastDoc }));
+      setLastDoc((prev) => ({
+        ...prev,
+        series: seriesQuery.data.lastDoc,
+      }));
     }
   }, [singlePostsQuery.data, seriesQuery.data]);
 
@@ -205,6 +203,12 @@ function Posts() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
+      {/* Error Message */}
+      {error && (
+        <div className="bg-red-100 text-red-700 p-4 rounded-lg font-inter mb-4">
+          {error}
+        </div>
+      )}
       {/* Header */}
       <h1 className="text-3xl font-bold font-poppins text-slate-800 mb-6">
         Posts
@@ -251,26 +255,38 @@ function Posts() {
                 {singlePostsQuery.data.items.map((post) => {
                   const isUpvoted = userData?.upvotedPosts?.includes(post.id);
                   return (
-                    <div key={post.id} className="relative">
-                      <div onClick={() => openModal(post, "post")}>
-                        <Card
-                          title={post.title}
-                          excerpt={
-                            post.content.length > 100
-                              ? `${post.content.substring(0, 100)}...`
-                              : post.content
-                          }
-                          author={post.createdBy}
-                          date={new Date(
+                    <div
+                      key={post.id}
+                      className="relative bg-white rounded-lg shadow-md p-4"
+                    >
+                      <Link to={`/posts/${post.id}`}>
+                        <h2 className="text-xl font-semibold font-poppins text-slate-800 mb-2 hover:text-teal-600">
+                          {post.title}
+                        </h2>
+                        {post.image && (
+                          <img
+                            src={post.image}
+                            alt={post.title}
+                            className="w-full h-40 object-cover rounded-md my-2"
+                          />
+                        )}
+
+                        <SafeHTML
+                          html={post.content}
+                          className="text-slate-800 font-inter mb-2"
+                          maxLength={100}
+                        />
+                        <p className="text-sm text-slate-600 font-inter">
+                          By {post.createdBy} •{" "}
+                          {new Date(
                             post.datePosted?.seconds * 1000
                           ).toLocaleDateString()}
-                          image={post.image}
-                        />
-                      </div>
+                        </p>
+                      </Link>
                       <div className="absolute top-2 right-2 flex space-x-2">
                         <button
                           onClick={() => shareLink(post.id, "post")}
-                          className="p-1 rounded-full bg-white shadow-md"
+                          className="p-1 rounded-full bg-white shadow-md hover:bg-slate-100"
                           title="Share"
                         >
                           <svg
@@ -290,10 +306,11 @@ function Posts() {
                         </button>
                         <button
                           onClick={() =>
-                            toggleUpvote(post.id, "post", isUpvoted)
+                            handleUpvote(post.id, "post", isUpvoted)
                           }
-                          className="p-1 rounded-full bg-white shadow-md"
+                          className="p-1 rounded-full bg-white shadow-md hover:bg-slate-100 flex items-center"
                           title={isUpvoted ? "Unupvote" : "Upvote"}
+                          disabled={upvoteMutation.isLoading}
                         >
                           <svg
                             className={`w-5 h-5 ${
@@ -313,7 +330,7 @@ function Posts() {
                               d="M5 15l7-7 7 7"
                             />
                           </svg>
-                          <span className="text-xs text-slate-600">
+                          <span className="text-xs text-slate-600 ml-1">
                             {post.upvotes || 0}
                           </span>
                         </button>
@@ -393,10 +410,7 @@ function Posts() {
                           className="w-24 h-24 object-cover rounded-md mr-4"
                         />
                         <div className="flex-grow">
-                          <h2
-                            onClick={() => openModal(series, "series")}
-                            className="text-xl font-semibold font-poppins text-slate-800 hover:text-teal-600 cursor-pointer"
-                          >
+                          <h2 className="text-xl font-semibold font-poppins text-slate-800">
                             {series.title}
                           </h2>
                           <p className="text-sm text-slate-600 font-inter">
@@ -405,14 +419,15 @@ function Posts() {
                               series.datePosted?.seconds * 1000
                             ).toLocaleDateString()}
                           </p>
-                          <p className="text-slate-800 font-inter mt-1">
-                            {series.content || "A thrilling series."}
-                          </p>
+                          <SafeHTML
+                            html={series.content}
+                            className="text-slate-800 font-inter my-4"
+                          />
                         </div>
                         <div className="absolute top-2 right-2 flex space-x-2">
                           <button
                             onClick={() => shareLink(series.id, "series")}
-                            className="p-1 rounded-full bg-white shadow-md"
+                            className="p-1 rounded-full bg-white shadow-md hover:bg-slate-100"
                             title="Share"
                           >
                             <svg
@@ -432,10 +447,11 @@ function Posts() {
                           </button>
                           <button
                             onClick={() =>
-                              toggleUpvote(series.id, "series", isUpvoted)
+                              handleUpvote(series.id, "series", isUpvoted)
                             }
-                            className="p-1 rounded-full bg-white shadow-md"
+                            className="p-1 rounded-full hidden bg-white shadow-md hover:bg-slate-100 items-center"
                             title={isUpvoted ? "Unupvote" : "Upvote"}
+                            disabled={upvoteMutation.isLoading}
                           >
                             <svg
                               className={`w-5 h-5 ${
@@ -455,7 +471,7 @@ function Posts() {
                                 d="M5 15l7-7 7 7"
                               />
                             </svg>
-                            <span className="text-xs text-slate-600">
+                            <span className="text-xs text-slate-600 ml-1">
                               {series.upvotes || 0}
                             </span>
                           </button>
@@ -470,7 +486,7 @@ function Posts() {
                           : `Show ${episodesQuery.data?.length || 0} Episodes`}
                       </button>
                       {expandedSeries === series.id && (
-                        <div className="mt-4 space-y-4">
+                        <div className="mt-4 space-y-2">
                           {episodesQuery.isLoading ? (
                             <p className="text-slate-600 font-inter">
                               Loading episodes...
@@ -480,32 +496,50 @@ function Posts() {
                               Error: {episodesQuery.error.message}
                             </p>
                           ) : (
-                            episodesQuery.data.map((episode) => (
+                            episodesQuery.data.map((episode, index) => (
                               <div
                                 key={episode.id}
-                                className="border-l-4 border-teal-600 pl-4"
+                                className="border-l-4 border-teal-600 pl-4 bg-slate-50 rounded-md transition-all duration-300"
                               >
-                                <h3
-                                  onClick={() =>
-                                    openModal(
-                                      { ...episode, seriesId: series.id },
-                                      "episode"
-                                    )
-                                  }
-                                  className="text-lg font-semibold font-inter text-slate-800 hover:text-teal-600 cursor-pointer"
+                                <button
+                                  onClick={() => toggleSeriesEpisode(index)}
+                                  className="w-full text-left flex justify-between items-center py-2"
                                 >
-                                  {episode.title}
-                                </h3>
-                                <p className="text-sm text-slate-600 font-inter">
-                                  {new Date(
-                                    episode.datePosted?.seconds * 1000
-                                  ).toLocaleDateString()}
-                                </p>
-                                <p className="text-slate-800 font-inter">
-                                  {episode.content.length > 100
-                                    ? `${episode.content.substring(0, 100)}...`
-                                    : episode.content}
-                                </p>
+                                  <h3 className="text font-semibold font-inter text-slate-800">
+                                    {episode.title}
+                                  </h3>
+                                  <svg
+                                    className={`w-5 h-5 text-slate-600 transform transition-transform ${
+                                      expandedSeriesEpisode === index
+                                        ? "rotate-180"
+                                        : ""
+                                    }`}
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth="2"
+                                      d="M19 9l-7 7-7-7"
+                                    />
+                                  </svg>
+                                </button>
+                                {expandedSeriesEpisode === index && (
+                                  <div>
+                                    <p className="text-xs text-slate-600 font-inter">
+                                      {new Date(
+                                        episode.datePosted?.seconds * 1000
+                                      ).toLocaleDateString()}
+                                    </p>
+                                    <SafeHTML
+                                      html={episode.content}
+                                      className="text-slate-800 font-inter mb-6"
+                                    />
+                                  </div>
+                                )}
                               </div>
                             ))
                           )}
@@ -557,51 +591,6 @@ function Posts() {
             </>
           )}
         </section>
-      )}
-
-      {/* Modal for Post/Episode */}
-      {selectedItem && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-md max-w-lg w-full mx-4 p-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-bold font-poppins text-slate-800">
-                {selectedItem.title}
-              </h2>
-              <button
-                onClick={() => setSelectedItem(null)}
-                className="text-slate-600 hover:text-slate-800"
-              >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-            <Card
-              title={selectedItem.title}
-              excerpt={selectedItem.content}
-              author={selectedItem.createdBy || "Unknown"}
-              date={
-                selectedItem.datePosted
-                  ? new Date(
-                      selectedItem.datePosted?.seconds * 1000
-                    ).toLocaleDateString()
-                  : "Unknown"
-              }
-              image={selectedItem.image}
-            />
-          </div>
-        </div>
       )}
     </div>
   );

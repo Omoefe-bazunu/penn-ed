@@ -1,4 +1,3 @@
-// src/App.jsx
 import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -66,6 +65,11 @@ function App() {
                   <Route path="/dashboard/settings" element={<Settings />} />
                   <Route path="/posts" element={<Posts />} />
                   <Route path="/posts/:id" element={<PostDetails />} />
+                  <Route path="/series/:id" element={<PostDetails />} />
+                  <Route
+                    path="/series/:seriesId/episodes/:episodeId"
+                    element={<PostDetails />}
+                  />
                   <Route path="/jobs" element={<Jobs />} />
                   <Route path="/jobs/:id" element={<Navigate to="/jobs" />} />
                   <Route path="/courses" element={<Courses />} />

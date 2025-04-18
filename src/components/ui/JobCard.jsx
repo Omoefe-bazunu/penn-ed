@@ -1,3 +1,5 @@
+import SafeHTML from "../../pages/Posts/SafeHTML";
+
 // src/components/JobCard.jsx
 function JobCard({ job }) {
   return (
@@ -15,11 +17,15 @@ function JobCard({ job }) {
       <p className="text-slate-600 font-inter text-sm mb-2">
         <strong>{job.company}</strong>
       </p>
-      <p className="text-slate-600 font-inter text-sm mb-3">
+      {/* <p className="text-slate-600 font-inter text-sm mb-3">
         {job.description.length > 100
           ? `${job.description.substring(0, 100)}...`
           : job.description}
-      </p>
+      </p> */}
+      <SafeHTML
+        html={job.description}
+        className="text-slate-800 font-inter text-sm mb-2"
+      />
       {job.externalLink && (
         <a
           href={job.externalLink}

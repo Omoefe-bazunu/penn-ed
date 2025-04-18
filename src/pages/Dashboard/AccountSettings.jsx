@@ -130,7 +130,7 @@ function AccountSettings() {
             name="name"
             value={formData.name}
             onChange={handleChange}
-            className="w-full p-2 border border-slate-300 rounded-md font-inter"
+            className="w-full p-2 border border-slate-300 rounded-md font-inter darktheme"
             required
           />
         </div>
@@ -146,7 +146,7 @@ function AccountSettings() {
             name="bio"
             value={formData.bio}
             onChange={handleChange}
-            className="w-full p-2 border border-slate-300 rounded-md font-inter"
+            className="w-full p-2 border border-slate-300 rounded-md font-inter darktheme"
             rows="4"
           ></textarea>
         </div>
@@ -163,7 +163,7 @@ function AccountSettings() {
             name="phone"
             value={formData.phone}
             onChange={handleChange}
-            className="w-full p-2 border border-slate-300 rounded-md font-inter"
+            className="w-full p-2 border border-slate-300 rounded-md font-inter darktheme"
           />
         </div>
         <div className="mb-4">
@@ -179,7 +179,7 @@ function AccountSettings() {
             name="address"
             value={formData.address}
             onChange={handleChange}
-            className="w-full p-2 border border-slate-300 rounded-md font-inter"
+            className="w-full p-2 border border-slate-300 rounded-md font-inter darktheme"
           />
         </div>
         <div className="mb-4">
@@ -195,7 +195,7 @@ function AccountSettings() {
             name="twitter"
             value={formData.twitter}
             onChange={handleChange}
-            className="w-full p-2 border border-slate-300 rounded-md font-inter"
+            className="w-full p-2 border border-slate-300 rounded-md font-inter darktheme"
           />
         </div>
         <div className="mb-4">
@@ -211,7 +211,7 @@ function AccountSettings() {
             name="linkedin"
             value={formData.linkedin}
             onChange={handleChange}
-            className="w-full p-2 border border-slate-300 rounded-md font-inter"
+            className="w-full p-2 border border-slate-300 rounded-md font-inter darktheme"
           />
         </div>
         <div className="mb-4">
@@ -227,7 +227,7 @@ function AccountSettings() {
             name="instagram"
             value={formData.instagram}
             onChange={handleChange}
-            className="w-full p-2 border border-slate-300 rounded-md font-inter"
+            className="w-full p-2 border border-slate-300 rounded-md font-inter darktheme"
           />
         </div>
         <div className="mb-4">

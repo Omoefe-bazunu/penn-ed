@@ -7,6 +7,7 @@ import { useAuth } from "../../context/AuthContext";
 import { Link } from "react-router-dom";
 import CompetitionApplicationModal from "../../components/CompetitionApplicationModal";
 import SubscriptionModal from "../../components/subscriptionModal";
+import SafeHTML from "../Posts/SafeHTML";
 
 function Competitions() {
   const [activeTab, setActiveTab] = useState("ongoing");
@@ -104,9 +105,13 @@ function Competitions() {
               <p className="text-sm font-inter text-slate-600 mb-2">
                 Posted on: {new Date(comp.datePosted).toLocaleDateString()}
               </p>
-              <p className="text-slate-600 font-inter mb-4 line-clamp-3">
+              {/* <p className="text-slate-600 font-inter mb-4 line-clamp-3">
                 {comp.description}
-              </p>
+              </p> */}
+              <SafeHTML
+                html={comp.description}
+                className="text-slate-800 font-inter mb-2"
+              />
               {comp.status === "ongoing" && (
                 <>
                   <h3 className="text-md font-semibold font-inter text-slate-800 mb-2">

@@ -1,56 +1,77 @@
-// src/pages/Auth/Signup.jsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { doc, setDoc } from "firebase/firestore";
-import { dbase } from "../../firebase";
 
 function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [error, setError] = useState("");
-  const { signup } = useAuth();
+  const [success, setSuccess] = useState("");
+  const [retryTimeout, setRetryTimeout] = useState(null);
+  const { signup, authError, loading } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Clear timeout on unmount
+    return () => {
+      if (retryTimeout) clearTimeout(retryTimeout);
+    };
+  }, [retryTimeout]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    try {
-      const userCredential = await signup(email, password);
-      const user = userCredential.user;
-      await setDoc(doc(dbase, "users", user.uid), {
-        name: name || user.email.split("@")[0],
-        email: user.email,
-        profilePicture: null,
-        bio: "",
-        contactInfo: {
-          phone: "",
-          address: "",
-        },
-        socialLinks: {
-          twitter: "",
-          linkedin: "",
-          instagram: "",
-        },
-        posts: [],
-        series: [],
-        upvotedPosts: [],
-        pendingReceipt: null,
-        subscriptions: [],
-        subscribed: false,
-      });
-      navigate("/dashboard");
-    } catch (err) {
-      setError("Failed to sign up: " + err.message);
+    setError("");
+    setSuccess("");
+
+    // Basic validation
+    if (!email || !password) {
+      setError("Email and password are required");
+      return;
+    }
+
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
+
+    const result = await signup(email, password, name);
+
+    if (result.success) {
+      setSuccess("Account created! Please check your email for verification.");
+      setTimeout(() => navigate("/login"), 5000);
+    } else if (result.code === "auth/too-many-requests") {
+      // Set a retry timeout (5 minutes)
+      const timeout = setTimeout(() => {
+        setError("You can now try signing up again.");
+        setRetryTimeout(null);
+      }, 300000); // 5 minutes
+      setRetryTimeout(timeout);
     }
   };
 
   return (
     <div className="max-w-md mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold font-poppins text-slate-800 mb-6">
-        Sign Up
-      </h1>
-      {error && <p className="text-red-500 font-inter mb-4">{error}</p>}
+      <h1 className="text-3xl font-bold mb-6">Sign Up</h1>
+
+      {authError && (
+        <div className="bg-red-100 text-red-700 p-4 rounded-lg mb-4">
+          {authError}
+          {retryTimeout && (
+            <p className="mt-2 text-sm">
+              Try again in {Math.ceil(retryTimeout._idleTimeout / 1000 / 60)}{" "}
+              minutes.
+            </p>
+          )}
+        </div>
+      )}
+
+      {success && (
+        <div className="bg-green-100 text-green-700 p-4 rounded-lg mb-4">
+          {success}
+        </div>
+      )}
+
       <form
         onSubmit={handleSubmit}
         className="bg-white rounded-lg shadow-md p-6"
@@ -67,8 +88,9 @@ function Signup() {
             id="name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full p-2 border border-slate-300 rounded-md font-inter"
+            className="w-full p-2 border border-slate-300 rounded-md font-inter text-slate-800 darktheme"
             placeholder="Enter your name"
+            required
           />
         </div>
         <div className="mb-4">
@@ -83,7 +105,7 @@ function Signup() {
             id="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full p-2 border border-slate-300 rounded-md font-inter"
+            className="w-full p-2 border border-slate-300 rounded-md font-inter text-slate-800 darktheme"
             required
           />
         </div>
@@ -99,15 +121,21 @@ function Signup() {
             id="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full p-2 border border-slate-300 rounded-md font-inter"
+            className="w-full p-2 border border-slate-300 rounded-md font-inter text-slate-800 darktheme"
             required
+            minLength={6}
           />
         </div>
         <button
           type="submit"
-          className="w-full bg-teal-600 text-white font-inter font-semibold py-2 rounded-lg hover:bg-teal-500 transition-colors"
+          disabled={loading || retryTimeout}
+          className={`w-full py-2 rounded-lg ${
+            loading || retryTimeout
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-teal-600 hover:bg-teal-500"
+          } text-white font-semibold transition-colors`}
         >
-          Sign Up
+          {loading ? "Creating Account..." : "Sign Up"}
         </button>
       </form>
     </div>

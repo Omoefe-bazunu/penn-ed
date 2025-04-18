@@ -56,16 +56,19 @@ function SubscriptionModal({ isOpen, onClose }) {
         }),
       });
 
-      // Send email via EmailJS
+      // Send email via EmailJS - using direct environment variables
       await emailjs.send(
-        process.env.REACT_APP_EMAILJS_SERVICE_ID,
-        process.env.REACT_APP_EMAILJS_TEMPLATE_ID,
+        import.meta.env.VITE_EMAILJS_SERVICE_ID ||
+          process.env.REACT_APP_EMAILJS_SERVICE_ID,
+        import.meta.env.VITE_EMAILJS_TEMPLATE_ID ||
+          process.env.REACT_APP_EMAILJS_TEMPLATE_ID,
         {
           user_name: userData?.name || "User",
           user_email: user.email,
           receipt_url: downloadURL,
         },
-        process.env.REACT_APP_EMAILJS_USER_ID
+        import.meta.env.VITE_EMAILJS_USER_ID ||
+          process.env.REACT_APP_EMAILJS_USER_ID
       );
 
       alert("Receipt submitted! Awaiting admin approval.");

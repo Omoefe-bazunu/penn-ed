@@ -1,38 +1,93 @@
-// src/pages/Dashboard/PublicPortfolio.jsx
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, collection, getDocs } from "firebase/firestore";
 import { dbase } from "../../firebase";
+import SafeHTML from "../Posts/SafeHTML";
 
 function PublicPortfolio() {
   const { uid } = useParams();
   const [portfolio, setPortfolio] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [expandedPosts, setExpandedPosts] = useState({});
+
+  const togglePostExpand = (postId) => {
+    setExpandedPosts((prev) => ({
+      ...prev,
+      [postId]: !prev[postId],
+    }));
+  };
 
   useEffect(() => {
     const fetchPortfolio = async () => {
-      try {
-        const userDoc = await getDoc(doc(dbase, "users", uid));
-        if (userDoc.exists()) {
-          const data = userDoc.data();
+      if (uid) {
+        try {
+          // Fetch user data
+          const userDoc = await getDoc(doc(dbase, "users", uid));
+          if (!userDoc.exists()) {
+            throw new Error("User document not found");
+          }
+          const userData = userDoc.data();
+
+          // Fetch posts data
+          const postsData = [];
+          if (userData.posts?.length > 0) {
+            const postsPromises = userData.posts.map((postId) =>
+              getDoc(doc(dbase, "posts", postId))
+            );
+            const postsSnapshots = await Promise.all(postsPromises);
+            postsData.push(
+              ...postsSnapshots
+                .filter((snap) => snap.exists())
+                .map((snap) => ({ id: snap.id, ...snap.data() }))
+            );
+          }
+
+          // Fetch series data with episodes
+          const seriesData = [];
+          if (userData.series?.length > 0) {
+            const seriesPromises = userData.series.map((seriesId) =>
+              getDoc(doc(dbase, "series", seriesId))
+            );
+            const seriesSnapshots = await Promise.all(seriesPromises);
+
+            for (const seriesSnap of seriesSnapshots) {
+              if (seriesSnap.exists()) {
+                const series = { id: seriesSnap.id, ...seriesSnap.data() };
+
+                // Fetch episodes for this series
+                const episodesSnap = await getDocs(
+                  collection(dbase, "series", series.id, "episodes")
+                );
+                series.episodes = episodesSnap.docs.map((doc) => ({
+                  id: doc.id,
+                  ...doc.data(),
+                }));
+
+                seriesData.push(series);
+              }
+            }
+          }
+
           setPortfolio({
-            name: data.name,
-            email: data.email,
-            profilePicture: data.profilePicture,
-            bio: data.bio,
-            contactInfo: data.contactInfo,
-            socialLinks: data.socialLinks,
-            posts: data.posts || [],
-            series: data.series || [],
+            name: userData.name || "",
+            email: userData.email || "",
+            profilePicture: userData.profilePicture || null,
+            bio: userData.bio || "",
+            contactInfo: userData.contactInfo || { phone: "", address: "" },
+            socialLinks: userData.socialLinks || {
+              twitter: "",
+              linkedin: "",
+              instagram: "",
+            },
+            posts: postsData,
+            series: seriesData,
           });
-        } else {
-          setError("User not found.");
+          setLoading(false);
+        } catch (err) {
+          setError("Failed to load portfolio: " + err.message);
+          setLoading(false);
         }
-        setLoading(false);
-      } catch (err) {
-        setError("Failed to load portfolio: " + err.message);
-        setLoading(false);
       }
     };
     fetchPortfolio();
@@ -155,21 +210,34 @@ function PublicPortfolio() {
             {portfolio.posts.map((post) => (
               <div
                 key={post.id}
-                className="bg-slate-100 rounded-lg shadow-md p-4"
+                className="bg-slate-100 rounded-lg shadow-md overflow-hidden"
               >
                 {post.image && (
                   <img
                     src={post.image}
                     alt={post.title}
-                    className="w-full h-32 object-cover rounded-md mb-2"
+                    className="w-full h-32 object-cover"
                   />
                 )}
-                <h3 className="text-teal-600 font-poppins font-semibold">
-                  {post.title}
-                </h3>
-                <p className="text-slate-600 font-inter text-sm">
-                  {post.content.substring(0, 100)}...
-                </p>
+                <div className="p-4">
+                  <h3 className="text-teal-600 font-poppins font-semibold mb-2">
+                    {post.title}
+                  </h3>
+                  <button
+                    onClick={() => togglePostExpand(post.id)}
+                    className="text-gray-500 hover:text-gray-400 text-sm font-inter mb-2"
+                  >
+                    {expandedPosts[post.id]
+                      ? "Close content -"
+                      : "Open Content +"}
+                  </button>
+                  {expandedPosts[post.id] && (
+                    <SafeHTML
+                      html={post.content}
+                      className="text-slate-800 font-inter mb-6"
+                    />
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -184,21 +252,23 @@ function PublicPortfolio() {
             {portfolio.series.map((series) => (
               <div
                 key={series.id}
-                className="bg-slate-100 rounded-lg shadow-md p-4"
+                className="bg-slate-100 rounded-lg shadow-md overflow-hidden"
               >
                 {series.image && (
                   <img
                     src={series.image}
                     alt={series.title}
-                    className="w-full h-32 object-cover rounded-md mb-2"
+                    className="w-full h-32 object-cover"
                   />
                 )}
-                <h3 className="text-teal-600 font-poppins font-semibold">
-                  {series.title}
-                </h3>
-                <p className="text-slate-600 font-inter text-sm">
-                  {series.episodes.length} episode(s)
-                </p>
+                <div className="p-4">
+                  <h3 className="text-teal-600 font-poppins font-semibold">
+                    {series.title}
+                  </h3>
+                  <p className="text-slate-600 font-inter text-sm mt-2">
+                    {series.episodes.length} episode(s)
+                  </p>
+                </div>
               </div>
             ))}
           </div>

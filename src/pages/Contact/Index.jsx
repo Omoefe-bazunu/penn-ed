@@ -58,7 +58,7 @@ function Contact() {
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                className="w-full p-2 border border-slate-300 rounded-md font-inter text-slate-800"
+                className="w-full p-2 border border-slate-300 rounded-md font-inter text-slate-800 darktheme"
                 required
               />
             </div>
@@ -75,7 +75,7 @@ function Contact() {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                className="w-full p-2 border border-slate-300 rounded-md font-inter text-slate-800"
+                className="w-full p-2 border border-slate-300 rounded-md font-inter text-slate-800 darktheme"
                 required
               />
             </div>
@@ -91,7 +91,7 @@ function Contact() {
                 name="message"
                 value={formData.message}
                 onChange={handleChange}
-                className="w-full p-2 border border-slate-300 rounded-md font-inter text-slate-800"
+                className="w-full p-2 border border-slate-300 rounded-md font-inter text-slate-800 darktheme"
                 rows="5"
                 required
               ></textarea>

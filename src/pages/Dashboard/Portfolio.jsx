@@ -1,76 +1,148 @@
-// src/pages/Dashboard/Portfolio.jsx
 import { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, collection, getDocs, getDoc } from "firebase/firestore";
 import { dbase } from "../../firebase";
 import { Link, Navigate } from "react-router-dom";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import EditPost from "../../components/postcontrol/EditPost";
+import DeletePost from "../../components/postcontrol/Deletepost";
+import EditEpisode from "../../components/postcontrol/EditEpisode";
+import DeleteEpisode from "../../components/postcontrol/DeleteEpisode";
+import SafeHTML from "../Posts/SafeHTML";
+
+async function fetchUserData(uid) {
+  const userDoc = await getDoc(doc(dbase, "users", uid));
+  if (!userDoc.exists()) {
+    throw new Error("User document not found");
+  }
+  return userDoc.data();
+}
+
+async function fetchPosts(postIds) {
+  if (!postIds || postIds.length === 0) return [];
+
+  const postsPromises = postIds.map((postId) =>
+    getDoc(doc(dbase, "posts", postId))
+  );
+  const postsSnapshots = await Promise.all(postsPromises);
+  return postsSnapshots
+    .filter((snap) => snap.exists())
+    .map((snap) => ({ id: snap.id, ...snap.data() }));
+}
+
+async function fetchSeriesWithEpisodes(seriesIds) {
+  if (!seriesIds || seriesIds.length === 0) return [];
+
+  // Fetch all series documents
+  const seriesPromises = seriesIds.map((seriesId) =>
+    getDoc(doc(dbase, "series", seriesId))
+  );
+  const seriesSnapshots = await Promise.all(seriesPromises);
+
+  // For each series, fetch its episodes
+  const seriesData = [];
+  for (const seriesSnap of seriesSnapshots) {
+    if (seriesSnap.exists()) {
+      const series = { id: seriesSnap.id, ...seriesSnap.data() };
+
+      const episodesQuery = await getDocs(
+        collection(dbase, "series", series.id, "episodes")
+      );
+      series.episodes = episodesQuery.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      seriesData.push(series);
+    }
+  }
+
+  return seriesData;
+}
 
 function Portfolio() {
   const { user, userData, loading: authLoading } = useAuth();
-  const [portfolio, setPortfolio] = useState({
-    posts: [],
-    series: [],
-    name: "",
-    email: "",
-    profilePicture: null,
-    bio: "",
-    contactInfo: { phone: "", address: "" },
-    socialLinks: { twitter: "", linkedin: "", instagram: "" },
-  });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [editingPost, setEditingPost] = useState(null);
+  const [deletingPost, setDeletingPost] = useState(null);
+  const [editingEpisode, setEditingEpisode] = useState(null);
+  const [deletingEpisode, setDeletingEpisode] = useState(null);
+  const queryClient = useQueryClient();
+
   const shareUrl = user
     ? `${window.location.origin}/portfolio/${user.uid}`
     : "";
 
-  useEffect(() => {
-    const fetchPortfolio = async () => {
-      if (user) {
-        try {
-          const userDoc = await getDoc(doc(dbase, "users", user.uid));
-          if (userDoc.exists()) {
-            const data = userDoc.data();
-            setPortfolio({
-              name: data.name || "",
-              email: data.email || "",
-              profilePicture: data.profilePicture || null,
-              bio: data.bio || "",
-              contactInfo: data.contactInfo || { phone: "", address: "" },
-              socialLinks: data.socialLinks || {
-                twitter: "",
-                linkedin: "",
-                instagram: "",
-              },
-              posts: data.posts || [],
-              series: data.series || [],
-            });
-          }
-          setLoading(false);
-        } catch (err) {
-          setError("Failed to load portfolio: " + err.message);
-          setLoading(false);
-        }
-      }
-    };
-    fetchPortfolio();
-  }, [user]);
+  // Fetch all portfolio data using React Query
+  const {
+    data: portfolio,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["portfolio", user?.uid],
+    queryFn: async () => {
+      if (!user) return null;
 
-  const handleShare = () => {
-    navigator.clipboard.writeText(shareUrl);
-    alert("Portfolio link copied to clipboard!");
+      const userData = await fetchUserData(user.uid);
+      const [posts, series] = await Promise.all([
+        fetchPosts(userData.posts),
+        fetchSeriesWithEpisodes(userData.series),
+      ]);
+
+      return {
+        ...userData,
+        posts,
+        series,
+      };
+    },
+    enabled: !!user,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+
+  const refreshPortfolio = () => {
+    queryClient.invalidateQueries(["portfolio", user?.uid]);
   };
 
-  if (authLoading || loading)
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator
+        .share({
+          title: `${portfolio?.name}'s Portfolio`,
+          text: `Check out ${portfolio?.name}'s portfolio on our platform`,
+          url: shareUrl,
+        })
+        .catch(() => {
+          navigator.clipboard.writeText(shareUrl);
+          alert("Portfolio link copied to clipboard!");
+        });
+    } else {
+      navigator.clipboard.writeText(shareUrl);
+      alert("Portfolio link copied to clipboard!");
+    }
+  };
+
+  if (authLoading || isLoading) {
     return <div className="text-center py-10">Loading...</div>;
-  if (!user) return <Navigate to="/login" />;
+  }
+
+  if (!user) {
+    return <Navigate to="/login" />;
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-10 text-red-500">
+        Error: {error.message}
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold font-poppins text-slate-800 mb-6">
         Your Portfolio
       </h1>
-      {error && <p className="text-red-500 font-inter mb-4">{error}</p>}
-      {portfolio.name ? (
+
+      {portfolio?.name ? (
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
             {portfolio.profilePicture && (
@@ -90,8 +162,8 @@ function Portfolio() {
                   {portfolio.bio}
                 </p>
               )}
-              {(portfolio.contactInfo.phone ||
-                portfolio.contactInfo.address) && (
+              {(portfolio.contactInfo?.phone ||
+                portfolio.contactInfo?.address) && (
                 <div className="mt-2">
                   {portfolio.contactInfo.phone && (
                     <p className="text-slate-600 font-inter">
@@ -105,16 +177,16 @@ function Portfolio() {
                   )}
                 </div>
               )}
-              {(portfolio.socialLinks.twitter ||
-                portfolio.socialLinks.linkedin ||
-                portfolio.socialLinks.instagram) && (
+              {(portfolio.socialLinks?.twitter ||
+                portfolio.socialLinks?.linkedin ||
+                portfolio.socialLinks?.instagram) && (
                 <div className="flex gap-4 mt-4 justify-center sm:justify-start">
                   {portfolio.socialLinks.twitter && (
                     <a
                       href={portfolio.socialLinks.twitter}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-teal-600 hover:text-teal-500 p-4 bg-gray-600 rounded-full"
+                      className="text-white p-4 bg-teal-500 rounded-full"
                     >
                       <svg
                         className="w-6 h-6"
@@ -131,7 +203,7 @@ function Portfolio() {
                       href={portfolio.socialLinks.linkedin}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-teal-600 hover:text-teal-500 p-4 bg-gray-600 rounded-full"
+                      className="text-white p-4 bg-teal-500 rounded-full"
                     >
                       <svg
                         className="w-6 h-6"
@@ -148,7 +220,7 @@ function Portfolio() {
                       href={portfolio.socialLinks.instagram}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-teal-600 hover:text-teal-500 p-4 bg-gray-600 rounded-full"
+                      className="text-white p-4 bg-teal-500 rounded-full"
                     >
                       <svg
                         className="w-6 h-6"
@@ -164,27 +236,78 @@ function Portfolio() {
               )}
             </div>
           </div>
-          <button
-            onClick={handleShare}
-            className="mt-4 bg-teal-600 text-white font-inter font-semibold py-2 px-4 rounded-lg hover:bg-teal-500 transition-colors"
-          >
-            Share Portfolio
-          </button>
+
+          <div className="mt-6">
+            <button
+              onClick={handleShare}
+              className="bg-teal-600 text-white font-inter font-semibold py-2 px-4 rounded-lg hover:bg-teal-500 transition-colors flex items-center gap-2"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z" />
+              </svg>
+              Share Portfolio
+            </button>
+
+            <div className="mt-4">
+              <p className="text-sm text-slate-600 font-inter">
+                Your public portfolio link:
+              </p>
+              <div className="flex items-center gap-2 mt-1">
+                <Link
+                  to={`/portfolio/${user.uid}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-teal-600 hover:text-teal-500 font-inter text-sm break-all"
+                >
+                  {shareUrl}
+                </Link>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(shareUrl);
+                    alert("Link copied to clipboard!");
+                  }}
+                  className="text-slate-600 hover:text-teal-600"
+                  title="Copy link"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       ) : (
         <div className="mb-4 bg-teal-600 w-fit text-white font-inter font-semibold py-2 px-4 rounded-lg hover:bg-teal-500 transition-colors">
           <Link to="/dashboard/settings">Update your Portfolio</Link>
         </div>
       )}
+
       <div className="bg-white rounded-lg shadow-md p-6">
         <h2 className="text-xl font-semibold font-poppins text-slate-800 mb-4">
           Posts
         </h2>
-        {portfolio.posts.length === 0 ? (
+        {portfolio?.posts?.length === 0 ? (
           <p className="text-slate-600 font-inter">No posts yet.</p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {portfolio.posts.map((post) => (
+            {portfolio?.posts?.map((post) => (
               <div
                 key={post.id}
                 className="bg-slate-100 rounded-lg shadow-md p-4"
@@ -199,21 +322,38 @@ function Portfolio() {
                 <h3 className="text-teal-600 font-poppins font-semibold">
                   {post.title}
                 </h3>
-                <p className="text-slate-600 font-inter text-sm">
-                  {post.content.substring(0, 100)}...
-                </p>
+                <SafeHTML
+                  html={post.content}
+                  className="text-slate-800 font-inter mb-2"
+                  maxLength={100}
+                />
+                <div className="flex gap-2 mt-2">
+                  <button
+                    onClick={() => setEditingPost(post)}
+                    className="text-teal-600 hover:text-teal-500 font-inter text-sm"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => setDeletingPost(post)}
+                    className="text-red-600 hover:text-red-500 font-inter text-sm"
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
             ))}
           </div>
         )}
+
         <h2 className="text-xl font-semibold font-poppins text-slate-800 mt-6 mb-4">
           Series
         </h2>
-        {portfolio.series.length === 0 ? (
+        {portfolio?.series?.length === 0 ? (
           <p className="text-slate-600 font-inter">No series yet.</p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {portfolio.series.map((series) => (
+            {portfolio?.series?.map((series) => (
               <div
                 key={series.id}
                 className="bg-slate-100 rounded-lg shadow-md p-4"
@@ -228,14 +368,78 @@ function Portfolio() {
                 <h3 className="text-teal-600 font-poppins font-semibold">
                   {series.title}
                 </h3>
-                <p className="text-slate-600 font-inter text-sm">
-                  {series.episodes.length} episode(s)
+                <p className="text-slate-600 font-inter">
+                  {series.description}
                 </p>
+                <p className="text-slate-600 font-inter text-sm mt-2">
+                  {series.episodes?.length || 0} episode(s)
+                </p>
+
+                {series.episodes?.map((episode) => (
+                  <div
+                    key={episode.id}
+                    className="mt-2 pl-2 border-l-2 border-teal-200"
+                  >
+                    <h4 className="text-slate-800 font-inter font-medium">
+                      {episode.title}
+                    </h4>
+                    <SafeHTML
+                      html={episode.content}
+                      className="text-slate-600 font-inter text-sm"
+                      maxLength={50}
+                    />
+                    <div className="flex gap-2 mt-1">
+                      <button
+                        onClick={() => setEditingEpisode({ series, episode })}
+                        className="text-teal-600 hover:text-teal-500 font-inter text-xs"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => setDeletingEpisode({ series, episode })}
+                        className="text-red-600 hover:text-red-500 font-inter text-xs"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
             ))}
           </div>
         )}
       </div>
+
+      {editingPost && (
+        <EditPost
+          post={editingPost}
+          onClose={() => setEditingPost(null)}
+          onSave={refreshPortfolio}
+        />
+      )}
+      {deletingPost && (
+        <DeletePost
+          post={deletingPost}
+          onClose={() => setDeletingPost(null)}
+          onDelete={refreshPortfolio}
+        />
+      )}
+      {editingEpisode && (
+        <EditEpisode
+          series={editingEpisode.series}
+          episode={editingEpisode.episode}
+          onClose={() => setEditingEpisode(null)}
+          onSave={refreshPortfolio}
+        />
+      )}
+      {deletingEpisode && (
+        <DeleteEpisode
+          series={deletingEpisode.series}
+          episode={deletingEpisode.episode}
+          onClose={() => setDeletingEpisode(null)}
+          onDelete={refreshPortfolio}
+        />
+      )}
     </div>
   );
 }

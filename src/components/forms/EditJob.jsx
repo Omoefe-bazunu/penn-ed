@@ -1,49 +1,52 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { doc, updateDoc } from "firebase/firestore";
 import {
-  addDoc,
-  collection,
-  serverTimestamp,
-  doc,
-  updateDoc,
-} from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+  ref,
+  uploadBytes,
+  getDownloadURL,
+  deleteObject,
+} from "firebase/storage";
 import { dbase, storage } from "../../firebase";
 import { useAuth } from "../../context/AuthContext";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 
-function CreateCourseForm({ isOpen, onClose }) {
+function EditJobForm({ job, isOpen, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
     title: "",
+    company: "",
     description: "",
     externalLink: "",
   });
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
 
-  // Quill editor modules configuration
+  useEffect(() => {
+    if (job) {
+      setFormData({
+        title: job.title || "",
+        company: job.company || "",
+        description: job.description || "",
+        externalLink: job.externalLink || "",
+      });
+      setPreview(job.image || null);
+    }
+  }, [job]);
+
   const modules = {
     toolbar: [
       ["bold", "italic", "underline", "strike"],
       ["blockquote", "code-block"],
       [{ header: 1 }, { header: 2 }],
       [{ list: "ordered" }, { list: "bullet" }],
-      [{ script: "sub" }, { script: "super" }],
-      [{ indent: "-1" }, { indent: "+1" }],
-      [{ direction: "rtl" }],
-      [{ size: ["small", false, "large", "huge"] }],
-      [{ header: [1, 2, 3, 4, 5, 6, false] }],
-      [{ color: [] }, { background: [] }],
-      [{ font: [] }],
-      [{ align: [] }],
-      ["link", "image", "video"],
+      ["link", "image"],
       ["clean"],
     ],
   };
 
-  // Quill editor formats configuration
   const formats = [
     "header",
     "bold",
@@ -53,14 +56,8 @@ function CreateCourseForm({ isOpen, onClose }) {
     "blockquote",
     "list",
     "bullet",
-    "indent",
     "link",
     "image",
-    "color",
-    "background",
-    "align",
-    "size",
-    "font",
   ];
 
   const handleChange = (e) => {
@@ -77,14 +74,10 @@ function CreateCourseForm({ isOpen, onClose }) {
       const validTypes = ["image/png", "image/jpeg"];
       if (!validTypes.includes(selectedFile.type)) {
         setError("Please upload a PNG or JPEG image.");
-        setFile(null);
-        setPreview(null);
         return;
       }
       if (selectedFile.size > 5 * 1024 * 1024) {
         setError("Image size must be less than 5MB.");
-        setFile(null);
-        setPreview(null);
         return;
       }
       setError("");
@@ -95,41 +88,42 @@ function CreateCourseForm({ isOpen, onClose }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!user) {
-      setError("Please log in to add a course.");
-      return;
-    }
-    if (!file) {
-      setError("Please upload a featured image.");
-      return;
-    }
-    try {
-      // Upload image
-      const docRef = await addDoc(collection(dbase, "courses"), {}); // Create doc to get ID
-      const storageRef = ref(
-        storage,
-        `images/courses/${docRef.id}/${file.name}`
-      );
-      await uploadBytes(storageRef, file);
-      const imageUrl = await getDownloadURL(storageRef);
+    if (!user || user.email !== "raniem57@gmail.com") return;
 
-      // Save course
-      await updateDoc(docRef, {
+    setIsLoading(true);
+    try {
+      const updateData = {
         title: formData.title,
+        company: formData.company,
         description: formData.description,
         externalLink: formData.externalLink,
-        image: imageUrl,
-        datePosted: serverTimestamp(),
-        createdBy: user.uid,
-      });
+      };
 
-      alert("Course added successfully!");
-      setFormData({ title: "", description: "", externalLink: "" });
-      setFile(null);
-      setPreview(null);
+      // Handle image upload if new file was selected
+      if (file) {
+        // Delete old image if it exists
+        if (job.image) {
+          try {
+            const oldImageRef = ref(storage, job.image);
+            await deleteObject(oldImageRef);
+          } catch (err) {
+            console.log("Error deleting old image:", err);
+          }
+        }
+
+        // Upload new image
+        const storageRef = ref(storage, `images/jobs/${job.id}/${file.name}`);
+        await uploadBytes(storageRef, file);
+        updateData.image = await getDownloadURL(storageRef);
+      }
+
+      await updateDoc(doc(dbase, "jobs", job.id), updateData);
+      onSuccess?.();
       onClose();
     } catch (err) {
-      setError("Failed to add course: " + err.message);
+      setError("Failed to update job: " + err.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -140,7 +134,7 @@ function CreateCourseForm({ isOpen, onClose }) {
       <div className="bg-white rounded-lg shadow-md max-w-lg w-full mx-4 p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold font-poppins text-slate-800">
-            Add New Course
+            Edit Job
           </h2>
           <button
             onClick={onClose}
@@ -164,15 +158,11 @@ function CreateCourseForm({ isOpen, onClose }) {
         </div>
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label
-              htmlFor="title"
-              className="block text-sm font-inter text-slate-600 mb-1"
-            >
-              Course Title
+            <label className="block text-sm font-inter text-slate-600 mb-1">
+              Job Title
             </label>
             <input
               type="text"
-              id="title"
               name="title"
               value={formData.title}
               onChange={handleChange}
@@ -181,10 +171,20 @@ function CreateCourseForm({ isOpen, onClose }) {
             />
           </div>
           <div className="mb-4">
-            <label
-              htmlFor="description"
-              className="block text-sm font-inter text-slate-600 mb-1"
-            >
+            <label className="block text-sm font-inter text-slate-600 mb-1">
+              Company
+            </label>
+            <input
+              type="text"
+              name="company"
+              value={formData.company}
+              onChange={handleChange}
+              className="w-full p-2 border border-slate-300 rounded-md font-inter text-slate-800"
+              required
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-sm font-inter text-slate-600 mb-1">
               Description
             </label>
             <ReactQuill
@@ -197,15 +197,11 @@ function CreateCourseForm({ isOpen, onClose }) {
             />
           </div>
           <div className="mb-4">
-            <label
-              htmlFor="externalLink"
-              className="block text-sm font-inter text-slate-600 mb-1"
-            >
+            <label className="block text-sm font-inter text-slate-600 mb-1">
               External Link
             </label>
             <input
               type="url"
-              id="externalLink"
               name="externalLink"
               value={formData.externalLink}
               onChange={handleChange}
@@ -213,19 +209,14 @@ function CreateCourseForm({ isOpen, onClose }) {
             />
           </div>
           <div className="mb-4">
-            <label
-              htmlFor="image"
-              className="block text-sm font-inter text-slate-600 mb-1"
-            >
+            <label className="block text-sm font-inter text-slate-600 mb-1">
               Featured Image
             </label>
             <input
               type="file"
-              id="image"
               accept="image/png,image/jpeg"
               onChange={handleFileChange}
               className="w-full p-2 border border-slate-300 rounded-md font-inter text-slate-800"
-              required
             />
             {preview && (
               <img
@@ -246,9 +237,12 @@ function CreateCourseForm({ isOpen, onClose }) {
             </button>
             <button
               type="submit"
-              className="bg-teal-600 text-white font-inter font-semibold py-2 px-4 rounded-lg hover:bg-teal-500 transition-colors"
+              disabled={isLoading}
+              className={`bg-teal-600 text-white font-inter font-semibold py-2 px-4 rounded-lg hover:bg-teal-500 transition-colors ${
+                isLoading ? "opacity-50 cursor-not-allowed" : ""
+              }`}
             >
-              Add Course
+              {isLoading ? "Saving..." : "Save Changes"}
             </button>
           </div>
         </form>
@@ -257,4 +251,4 @@ function CreateCourseForm({ isOpen, onClose }) {
   );
 }
 
-export default CreateCourseForm;
+export default EditJobForm;

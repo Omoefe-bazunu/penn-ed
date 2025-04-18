@@ -1,9 +1,16 @@
-// src/components/forms/CreateCompetitionForm.jsx
 import { useState } from "react";
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  serverTimestamp,
+  doc,
+  updateDoc,
+} from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { dbase, storage } from "../../firebase";
 import { useAuth } from "../../context/AuthContext";
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
 
 function CreateCompetitionForm({ isOpen, onClose }) {
   const [formData, setFormData] = useState({
@@ -16,8 +23,52 @@ function CreateCompetitionForm({ isOpen, onClose }) {
   const [error, setError] = useState("");
   const { user, userData } = useAuth();
 
+  // Quill editor modules configuration
+  const modules = {
+    toolbar: [
+      ["bold", "italic", "underline", "strike"],
+      ["blockquote", "code-block"],
+      [{ header: 1 }, { header: 2 }],
+      [{ list: "ordered" }, { list: "bullet" }],
+      [{ script: "sub" }, { script: "super" }],
+      [{ indent: "-1" }, { indent: "+1" }],
+      [{ direction: "rtl" }],
+      [{ size: ["small", false, "large", "huge"] }],
+      [{ header: [1, 2, 3, 4, 5, 6, false] }],
+      [{ color: [] }, { background: [] }],
+      [{ font: [] }],
+      [{ align: [] }],
+      ["link", "image", "video"],
+      ["clean"],
+    ],
+  };
+
+  // Quill editor formats configuration
+  const formats = [
+    "header",
+    "bold",
+    "italic",
+    "underline",
+    "strike",
+    "blockquote",
+    "list",
+    "bullet",
+    "indent",
+    "link",
+    "image",
+    "color",
+    "background",
+    "align",
+    "size",
+    "font",
+  ];
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleDescriptionChange = (value) => {
+    setFormData({ ...formData, description: value });
   };
 
   const handleFileChange = (e) => {
@@ -149,15 +200,14 @@ function CreateCompetitionForm({ isOpen, onClose }) {
             >
               Description
             </label>
-            <textarea
-              id="description"
-              name="description"
+            <ReactQuill
+              theme="snow"
               value={formData.description}
-              onChange={handleChange}
-              className="w-full p-2 border border-slate-300 rounded-md font-inter text-slate-800"
-              rows="4"
-              required
-            ></textarea>
+              onChange={handleDescriptionChange}
+              modules={modules}
+              formats={formats}
+              className="bg-white rounded-md font-inter text-slate-800 mb-2"
+            />
           </div>
           <div className="mb-4">
             <label
