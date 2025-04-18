@@ -9,25 +9,26 @@ const dummyPosts = [
     title: "The Art of Storytelling",
     excerpt:
       "Discover how to craft compelling narratives that captivate readers.",
-    author: "Jane Doe",
+    author: "Richard Owhere",
     date: "April 10, 2025",
-    image: "https://via.placeholder.com/400x200?text=Storytelling",
+    image: "story.jpg",
   },
   {
     id: "2",
     title: "Poetry in Motion",
     excerpt: "Explore the beauty of words through modern poetry techniques.",
-    author: "John Smith",
+    author: "Marvellous Agwu",
     date: "April 8, 2025",
-    image: "https://via.placeholder.com/400x200?text=Poetry",
+    image: "poem.jpg",
   },
   {
     id: "3",
     title: "Writing for Impact",
-    excerpt: "Learn to create content that resonates with your audience.",
-    author: "Emily Brown",
+    excerpt:
+      "Learn to create content that resonates with your audience and speaks to their emotions",
+    author: "Blessed Oluwaseyi",
     date: "April 5, 2025",
-    image: "https://via.placeholder.com/400x200?text=Writing",
+    image: "wrting.jpg",
   },
 ];
 
@@ -35,10 +36,10 @@ function Home() {
   return (
     <div className="bg-slate-100">
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-teal-600 to-teal-400 text-white py-20">
+      <section className="bg-gradient-to-r from-teal-600 to-teal-400 text-white py-20 ">
         <div className="max-w-7xl mx-auto px-4 text-center">
           <h1 className="text-4xl md:text-5xl font-bold font-poppins mb-4">
-            Welcome to Penned
+            Penned
           </h1>
           <p className="text-lg md:text-xl font-inter mb-8 max-w-2xl mx-auto">
             Share your stories, build your portfolio, connect with writers, and
@@ -57,7 +58,7 @@ function Home() {
       <section className="py-16">
         <div className="max-w-7xl mx-auto px-4">
           <h2 className="text-3xl font-bold font-poppins text-slate-800 mb-8 text-center">
-            Featured Stories
+            Hub of Stories
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {dummyPosts.map((post) => (
@@ -68,7 +69,7 @@ function Home() {
                 author={post.author}
                 date={post.date}
                 image={post.image}
-                link={`/posts/${post.id}`}
+                link={`#`}
               />
             ))}
           </div>
