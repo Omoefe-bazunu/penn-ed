@@ -1,27 +1,27 @@
 import { useState } from "react";
-import {
-  addDoc,
-  collection,
-  serverTimestamp,
-  doc,
-  updateDoc,
-} from "firebase/firestore";
+import { doc, updateDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { dbase, storage } from "../../firebase";
 import { useAuth } from "../../context/AuthContext";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 
-function CreateCourseForm({ isOpen, onClose }) {
+function EditCompetitionForm({
+  isOpen,
+  onClose,
+  competition,
+  refetchCompetitions,
+}) {
   const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    externalLink: "",
+    title: competition.title || "",
+    description: competition.description || "",
+    externalLink: competition.externalLink || "",
+    status: competition.status || "Ongoing",
   });
   const [file, setFile] = useState(null);
-  const [preview, setPreview] = useState(null);
+  const [preview, setPreview] = useState(competition.image || null);
   const [error, setError] = useState("");
-  const { user } = useAuth();
+  const { user, userData } = useAuth();
 
   // Quill editor modules configuration
   const modules = {
@@ -90,46 +90,54 @@ function CreateCourseForm({ isOpen, onClose }) {
       setError("");
       setFile(selectedFile);
       setPreview(URL.createObjectURL(selectedFile));
+    } else {
+      setFile(null);
+      setPreview(null);
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!user) {
-      setError("Please log in to add a course.");
+      setError("Please log in to edit a competition.");
       return;
     }
-    if (!file) {
-      setError("Please upload a featured image.");
+    if (userData?.email !== "raniem57@gmail.com") {
+      setError("Only admins can edit competitions.");
+      return;
+    }
+    if (!formData.title || !formData.description) {
+      setError("Title and description are required.");
       return;
     }
     try {
-      // Upload image
-      const docRef = await addDoc(collection(dbase, "courses"), {}); // Create doc to get ID
-      const storageRef = ref(
-        storage,
-        `images/courses/${docRef.id}/${file.name}`
-      );
-      await uploadBytes(storageRef, file);
-      const imageUrl = await getDownloadURL(storageRef);
+      let imageUrl = competition.image;
 
-      // Save course
+      // Upload new image if provided
+      if (file) {
+        const storageRef = ref(
+          storage,
+          `images/competitions/${competition.id}/${file.name}`
+        );
+        await uploadBytes(storageRef, file);
+        imageUrl = await getDownloadURL(storageRef);
+      }
+
+      // Update competition
+      const docRef = doc(dbase, "competitions", competition.id);
       await updateDoc(docRef, {
         title: formData.title,
         description: formData.description,
         externalLink: formData.externalLink,
+        status: formData.status,
         image: imageUrl,
-        datePosted: serverTimestamp(),
-        createdBy: user.uid,
       });
 
-      alert("Course added successfully!");
-      setFormData({ title: "", description: "", externalLink: "" });
-      setFile(null);
-      setPreview(null);
+      alert("Competition updated successfully!");
+      refetchCompetitions();
       onClose();
     } catch (err) {
-      setError("Failed to add course: " + err.message);
+      setError("Failed to update competition: " + err.message);
     }
   };
 
@@ -140,7 +148,7 @@ function CreateCourseForm({ isOpen, onClose }) {
       <div className="bg-white rounded-lg shadow-md max-w-lg w-full mx-4 p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold font-poppins text-slate-800">
-            Add New Course
+            Edit Competition
           </h2>
           <button
             onClick={onClose}
@@ -168,7 +176,7 @@ function CreateCourseForm({ isOpen, onClose }) {
               htmlFor="title"
               className="block text-sm font-inter text-slate-600 mb-1"
             >
-              Course Title
+              Competition Title
             </label>
             <input
               type="text"
@@ -198,6 +206,25 @@ function CreateCourseForm({ isOpen, onClose }) {
           </div>
           <div className="mb-4">
             <label
+              htmlFor="status"
+              className="block text-sm font-inter text-slate-600 mb-1"
+            >
+              Status
+            </label>
+            <select
+              id="status"
+              name="status"
+              value={formData.status}
+              onChange={handleChange}
+              className="w-full p-2 border border-slate-300 rounded-md font-inter text-slate-800"
+              required
+            >
+              <option value="Ongoing">Ongoing</option>
+              <option value="Past">Past</option>
+            </select>
+          </div>
+          <div className="mb-4">
+            <label
               htmlFor="externalLink"
               className="block text-sm font-inter text-slate-600 mb-1"
             >
@@ -217,7 +244,7 @@ function CreateCourseForm({ isOpen, onClose }) {
               htmlFor="image"
               className="block text-sm font-inter text-slate-600 mb-1"
             >
-              Featured Image
+              Featured Image (Optional)
             </label>
             <input
               type="file"
@@ -225,7 +252,6 @@ function CreateCourseForm({ isOpen, onClose }) {
               accept="image/png,image/jpeg"
               onChange={handleFileChange}
               className="w-full p-2 border border-slate-300 rounded-md font-inter text-slate-800"
-              required
             />
             {preview && (
               <img
@@ -248,7 +274,7 @@ function CreateCourseForm({ isOpen, onClose }) {
               type="submit"
               className="bg-teal-600 text-white font-inter font-semibold py-2 px-4 rounded-lg hover:bg-teal-500 transition-colors"
             >
-              Add Course
+              Update Competition
             </button>
           </div>
         </form>
@@ -257,4 +283,4 @@ function CreateCourseForm({ isOpen, onClose }) {
   );
 }
 
-export default CreateCourseForm;
+export default EditCompetitionForm;

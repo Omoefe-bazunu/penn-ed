@@ -222,7 +222,7 @@ function PostDetails() {
   const isUpvoted = userData?.upvotedPosts?.includes(id);
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8">
+    <div className="max-w-5xl mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold font-poppins text-slate-800 mb-4">
         {post.title}
       </h1>
@@ -306,7 +306,7 @@ function PostDetails() {
               value={newComment}
               onChange={(e) => setNewComment(e.target.value)}
               placeholder="Write a comment..."
-              className="w-full p-3 rounded-lg border border-slate-300 font-inter text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-600"
+              className="w-full p-4 rounded-lg border border-slate-300 font-inter text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-600"
               rows="4"
             />
             <button

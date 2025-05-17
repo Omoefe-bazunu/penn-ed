@@ -24,8 +24,9 @@ function Jobs() {
   const [error, setError] = useState("");
   const [editingJob, setEditingJob] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [expandedJobId, setExpandedJobId] = useState(null);
   const { user } = useAuth();
-  const jobsPerPage = 6;
+  const jobsPerPage = 3; // Changed from 6 to 3
 
   // Fetch total job count for pagination
   useEffect(() => {
@@ -70,6 +71,8 @@ function Jobs() {
         ...doc.data(),
         datePosted: doc.data().datePosted?.toDate() || new Date(),
       }));
+
+      console.log("Fetched jobs:", jobList); // Debug log
 
       // Update last document for next page
       if (querySnapshot.docs.length > 0) {
@@ -169,6 +172,10 @@ function Jobs() {
   const openForm = () => setIsFormOpen(true);
   const closeForm = () => setIsFormOpen(false);
 
+  const toggleExpand = (jobId) => {
+    setExpandedJobId((prevId) => (prevId === jobId ? null : jobId));
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
@@ -199,7 +206,7 @@ function Jobs() {
 
       {loading ? (
         <div className="text-center py-10">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-teal-600"></div>
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-teal-600"></div>
           <p className="mt-2 text-slate-600">Loading jobs...</p>
         </div>
       ) : jobs.length === 0 ? (
@@ -214,41 +221,57 @@ function Jobs() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-            {jobs.map((job) => (
-              <div key={job.id} className="relative">
-                <JobCard job={job} />
-                {user?.email === "raniem57@gmail.com" && (
-                  <div className="absolute top-2 right-2 flex space-x-2 z-10">
-                    <button
-                      onClick={(e) => handleEditClick(job, e)}
-                      className="p-1 rounded-full bg-white shadow-md hover:bg-slate-100"
-                      title="Edit"
-                    >
-                      <svg
-                        className="w-5 h-5 text-slate-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                        />
-                      </svg>
-                    </button>
-                    <DeleteJobButton
-                      jobId={job.id}
-                      onSuccess={handleDeleteSuccess}
-                      className="p-1 rounded-full bg-white shadow-md hover:bg-slate-100"
-                    />
+          <div className="grid grid-cols-1  gap-6 mb-6">
+            {jobs.map((job) => {
+              const isExpanded = expandedJobId === job.id;
+              return (
+                <div
+                  key={job.id}
+                  onClick={() => toggleExpand(job.id)}
+                  className="relative cursor-pointer border rounded-lg p-4 shadow-sm bg-gray-50"
+                >
+                  <div>
+                    <h2 className="text-lg font-semibold text-slate-800 mb-2">
+                      {job.title}
+                    </h2>
+                    {isExpanded && (
+                      <div className="text-sm text-slate-600">
+                        <JobCard job={job} />
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            ))}
+                  {user?.email === "raniem57@gmail.com" && (
+                    <div className="absolute top-2 right-2 flex space-x-2 z-10">
+                      <button
+                        onClick={(e) => handleEditClick(job, e)}
+                        className="p-1 rounded-full bg-white shadow-md hover:bg-slate-100"
+                        title="Edit"
+                      >
+                        <svg
+                          className="w-5 h-5 text-slate-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                          />
+                        </svg>
+                      </button>
+                      <DeleteJobButton
+                        jobId={job.id}
+                        onSuccess={handleDeleteSuccess}
+                        className="p-1 rounded-full bg-white shadow-md hover:bg-slate-100"
+                      />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
           {totalPages > 1 && (
             <div className="flex justify-center items-center space-x-2">

@@ -17,6 +17,7 @@ function CreateCompetitionForm({ isOpen, onClose }) {
     title: "",
     description: "",
     externalLink: "",
+    status: "Ongoing", // Default status
   });
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
@@ -102,8 +103,7 @@ function CreateCompetitionForm({ isOpen, onClose }) {
       setError("Please log in to add a competition.");
       return;
     }
-    if (userData?.email !== "admin@example.com") {
-      // Replace with your admin email
+    if (userData?.email !== "raniem57@gmail.com") {
       setError("Only admins can add competitions.");
       return;
     }
@@ -131,13 +131,19 @@ function CreateCompetitionForm({ isOpen, onClose }) {
         title: formData.title,
         description: formData.description,
         externalLink: formData.externalLink,
+        status: formData.status, // Save status
         image: imageUrl,
         datePosted: serverTimestamp(),
         createdBy: user.uid,
       });
 
       alert("Competition added successfully!");
-      setFormData({ title: "", description: "", externalLink: "" });
+      setFormData({
+        title: "",
+        description: "",
+        externalLink: "",
+        status: "Ongoing",
+      });
       setFile(null);
       setPreview(null);
       onClose();
@@ -204,10 +210,27 @@ function CreateCompetitionForm({ isOpen, onClose }) {
               theme="snow"
               value={formData.description}
               onChange={handleDescriptionChange}
-              modules={modules}
-              formats={formats}
-              className="bg-white rounded-md font-inter text-slate-800 mb-2"
+              className="bg-white"
             />
+          </div>
+          <div className="mb-4">
+            <label
+              htmlFor="status"
+              className="block text-sm font-inter text-slate-600 mb-1"
+            >
+              Status
+            </label>
+            <select
+              id="status"
+              name="status"
+              value={formData.status}
+              onChange={handleChange}
+              className="w-full p-2 border border-slate-300 rounded-md font-inter text-slate-800"
+              required
+            >
+              <option value="Ongoing">Ongoing</option>
+              <option value="Past">Past</option>
+            </select>
           </div>
           <div className="mb-4">
             <label

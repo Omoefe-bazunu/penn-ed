@@ -8,6 +8,7 @@ import Home from "./pages/Home";
 import About from "./pages/About/Index";
 import Contact from "./pages/Contact/Index";
 import NotFound from "./pages/NotFound";
+import CreateBlogPost from "./components/forms/CreateBlogPost";
 
 // Lazy-loaded pages
 const Dashboard = lazy(() => import("./pages/Dashboard/Index"));
@@ -16,21 +17,15 @@ const Settings = lazy(() => import("./pages/Dashboard/AccountSettings"));
 const Posts = lazy(() => import("./pages/Posts/Index"));
 const PostDetails = lazy(() => import("./pages/Posts/PostDetails"));
 const Jobs = lazy(() => import("./pages/Jobs/Index"));
-const Courses = lazy(() => import("./pages/Courses/Index"));
+
 const Competitions = lazy(() => import("./pages/Competitions/Index"));
 const Login = lazy(() => import("./pages/Auth/Login"));
 const Signup = lazy(() => import("./pages/Auth/Signup"));
+const BlogPosts = lazy(() => import("./pages/Blogs/Index"));
+const BlogPostDetails = lazy(() => import("./pages/Blogs/BlogDetails"));
 
 const PublicPortfolio = lazy(() => import("./pages/Dashboard/PublicPortfolio"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard/Index"));
-
-// const ResetPassword = lazy(() => import("./pages/Auth/ResetPassword")); // TODO: Uncomment when ResetPassword page is created
-// const JobDetails = lazy(() => import("./pages/Jobs/JobDetails")); // TODO: Uncomment when JobDetails page is created
-// const CourseDetails = lazy(() => import("./pages/Courses/CourseDetails")); // TODO: Uncomment when CourseDetails page is created
-// const Community = lazy(() => import("./pages/Community/Index")); // TODO: Uncomment when Community page is created
-// const ChatRoom = lazy(() => import("./pages/Community/ChatRoom")); // TODO: Uncomment when ChatRoom page is created
-// const CompetitionDetails = lazy(() => import("./pages/Competitions/CompetitionDetails")); // TODO: Uncomment when CompetitionDetails page is created
-// const Profile = lazy(() => import("./pages/Profiles/Profile")); // TODO: Uncomment when Profile page is created
 
 // Initialize QueryClient for data fetching
 const queryClient = new QueryClient({
@@ -72,12 +67,9 @@ function App() {
                   />
                   <Route path="/jobs" element={<Jobs />} />
                   <Route path="/jobs/:id" element={<Navigate to="/jobs" />} />
-                  <Route path="/courses" element={<Courses />} />
+
                   <Route path="/admin" element={<AdminDashboard />} />
-                  <Route
-                    path="/courses/:id"
-                    element={<Navigate to="/courses" />}
-                  />
+
                   <Route path="/competitions" element={<Competitions />} />
                   <Route
                     path="/competitions/:id"
@@ -85,10 +77,10 @@ function App() {
                   />
                   <Route path="/login" element={<Login />} />
                   <Route path="/signup" element={<Signup />} />
-                  {/* <Route path="/reset-password" element={<ResetPassword />} /> // TODO: Uncomment when ResetPassword page is created */}
-                  {/* <Route path="/community" element={<Community />} /> // TODO: Uncomment when Community page is created */}
-                  {/* <Route path="/community/chats/:id" element={<ChatRoom />} /> // TODO: Uncomment when ChatRoom page is created */}
-                  {/* <Route path="/profiles/:username" element={<Profile />} /> // TODO: Uncomment when Profile page is created */}
+                  <Route path="/blogs" element={<BlogPosts />} />
+                  <Route path="/blogs/:id" element={<BlogPostDetails />} />
+                  <Route path="/create-blog" element={<CreateBlogPost />} />
+
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </Suspense>

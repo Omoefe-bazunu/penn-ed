@@ -44,8 +44,8 @@ const navLinks = [
     ),
   },
   {
-    to: "/courses",
-    label: "Courses",
+    to: "/blogs",
+    label: "Blog",
     icon: (
       <svg
         className="w-5 h-5"

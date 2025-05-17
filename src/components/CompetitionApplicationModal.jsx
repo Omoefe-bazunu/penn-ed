@@ -1,7 +1,7 @@
 // src/components/CompetitionApplicationModal.jsx
 import { useState } from "react";
 import { addDoc, collection } from "firebase/firestore";
-import { dbase } from "../Firebase";
+import { dbase } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import { Link } from "react-router-dom";
 import SubscriptionModal from "./subscriptionModal";
@@ -10,7 +10,7 @@ function CompetitionApplicationModal({ isOpen, onClose, competitionTitle }) {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    submission: "",
+    // submission: "",
   });
   const [error, setError] = useState("");
   const [isSubscriptionOpen, setIsSubscriptionOpen] = useState(false);
@@ -36,11 +36,11 @@ function CompetitionApplicationModal({ isOpen, onClose, competitionTitle }) {
         competition: competitionTitle,
         name: formData.name,
         email: formData.email,
-        submission: formData.submission,
+        // submission: formData.submission,
         submittedAt: new Date().toISOString(),
       });
       alert("Application submitted successfully");
-      setFormData({ name: "", email: "", submission: "" });
+      setFormData({ name: "", email: "" });
       onClose();
     } catch (err) {
       setError(err.message);
@@ -132,7 +132,7 @@ function CompetitionApplicationModal({ isOpen, onClose, competitionTitle }) {
               required
             />
           </div>
-          <div className="mb-4">
+          {/* <div className="mb-4">
             <label
               htmlFor="submission"
               className="block text-sm font-inter text-slate-600 mb-1"
@@ -149,7 +149,7 @@ function CompetitionApplicationModal({ isOpen, onClose, competitionTitle }) {
               placeholder="Describe your submission or provide a link"
               required
             ></textarea>
-          </div>
+          </div> */}
           <div className="flex justify-end space-x-4">
             <button
               type="button"

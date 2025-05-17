@@ -235,13 +235,12 @@ function CreateJobForm({ isOpen, onClose }) {
             >
               Description *
             </label>
+
             <ReactQuill
               theme="snow"
               value={formData.description}
               onChange={handleDescriptionChange}
-              modules={modules}
-              formats={formats}
-              className="bg-white rounded-md font-inter text-slate-800 mb-2"
+              className="bg-white"
               readOnly={isSubmitting}
             />
           </div>

@@ -294,9 +294,7 @@ function CreatePostForm({ onSuccess }) {
             theme="snow"
             value={content}
             onChange={setContent}
-            modules={modules}
-            formats={formats}
-            className="bg-white rounded-md font-inter text-slate-800"
+            className="bg-white"
           />
         </div>
         <div className="mb-4">
