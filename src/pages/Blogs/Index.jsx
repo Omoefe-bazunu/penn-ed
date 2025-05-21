@@ -90,7 +90,9 @@ function BlogPosts() {
     <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-slate-800 mb-6">Blog Posts</h1>
-        {user?.email === "raniem57@gmail.com" && (
+        {["raniem57@gmail.com", "edumebifavour@gmail.com"].includes(
+          user?.email
+        ) && (
           <Link
             to="/create-blog"
             className="bg-teal-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-teal-500 transition-colors"

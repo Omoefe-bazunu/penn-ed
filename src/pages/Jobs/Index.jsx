@@ -240,7 +240,9 @@ function Jobs() {
                       </div>
                     )}
                   </div>
-                  {user?.email === "raniem57@gmail.com" && (
+                  {["raniem57@gmail.com", "edumebifavour@gmail.com"].includes(
+                    user?.email
+                  ) && (
                     <div className="absolute top-2 right-2 flex space-x-2 z-10">
                       <button
                         onClick={(e) => handleEditClick(job, e)}

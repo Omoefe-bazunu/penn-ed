@@ -191,7 +191,9 @@ function Competitions() {
             <p className="text-slate-600 font-inter mb-4">
               No {activeTab} competitions available.
             </p>
-            {user?.email === "raniem57@gmail.com" && (
+            {["raniem57@gmail.com", "edumebifavour@gmail.com"].includes(
+              user?.email
+            ) && (
               <Link
                 to="/dashboard/competitions/create"
                 className="bg-teal-600 text-white font-inter font-semibold py-2 px-4 rounded-lg hover:bg-teal-500 transition-colors"

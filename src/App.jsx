@@ -79,7 +79,10 @@ function App() {
                   <Route path="/signup" element={<Signup />} />
                   <Route path="/blogs" element={<BlogPosts />} />
                   <Route path="/blogs/:id" element={<BlogPostDetails />} />
-                  <Route path="/create-blog" element={<CreateBlogPost />} />
+                  <Route
+                    path="/admin/create-blog"
+                    element={<CreateBlogPost />}
+                  />
 
                   <Route path="*" element={<NotFound />} />
                 </Routes>
